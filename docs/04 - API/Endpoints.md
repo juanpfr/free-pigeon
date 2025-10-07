@@ -1,6 +1,6 @@
 # 🔗 Documentação da API REST
 
-## Endpoints Principais
+## Endpoints Principais (Exemplos)
 | Método | Endpoint | Descrição |
 |--------|-----------|-----------|
 | GET | /api/products/ | Lista todos os produtos |
