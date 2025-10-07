@@ -8,7 +8,7 @@ Toda a documentação técnica e funcional está na pasta [`docs/`](./docs).
 Acesse:
 - [Introdução](./docs/01%20-%20Introducao)
 - [Documentação Técnica (DER, Casos de Uso, Instalação)](./docs/02%20-%20Documentacao_Tecnica)
-- [UI/UX](./docs/03%20-%20UI_UX)
+- [Database](./docs/03%20-%20Database)
 - [API](./docs/04%20-%20API)
 - [Apresentação Final](./docs/05%20-%20Apresentacao)
 
