@@ -20,9 +20,6 @@ Abaixo está o diagrama que representa todas as tabelas e seus relacionamentos:
   <img src="./DER.png" alt="Diagrama ER do Free Pigeon" width="700">
 </p>
 
-> 💡 Dica: salve a imagem do diagrama na pasta `docs/` com o nome `diagrama-er.png`.  
-> Assim, o link acima funcionará automaticamente no seu repositório.
-
 ---
 
 ## 🏗️ Estrutura do Banco de Dados
