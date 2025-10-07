@@ -8,7 +8,7 @@
 
 ## 1️⃣ Clonar o repositório
 ```bash
-git clone https://github.com/seuusuario/free-pigeon.git
+git clone https://github.com/juanpfr/free-pigeon.git
 cd free-pigeon
 ```
 
