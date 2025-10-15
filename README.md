@@ -1,4 +1,4 @@
-# 🦜 Free Pigeon – Marketplace Digital Integrado
+# 🦅 Free Pigeon – Marketplace Digital Integrado
 
 Plataforma completa de e-commerce multi-vendedor desenvolvida com **Django + PostgreSQL + Vue.js**.
 
