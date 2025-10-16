@@ -16,20 +16,20 @@ cd free-pigeon
 ```bash
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate    # Windows
+.\venv\Scripts\activate    # Windows
 ```
 
 ## 3️⃣ Instalar dependências
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## 4️⃣ Configurar o banco de dados
 Crie o banco no PostgreSQL e atualize o arquivo `.env`:
 
 ```
-DB_NAME=freepigeon
-DB_USER=freepigeon_admin
+DB_NAME=freepigeon_db
+DB_USER=nome_do_seu_usuario_aqui
 DB_PASSWORD=coloque_sua_senha_aqui
 DB_HOST=localhost
 DB_PORT=5432
