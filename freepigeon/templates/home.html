@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagina Principal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <header class="flex flex-row bg-green-400 text-white p-3 shadow-lg rounded-b-lg items-center justify-between">
+        <div class="container mx-auto flex flex-row sm:flex-row items-center justify-between">
+            <div class="flex flex-row items-center">
+                <img src="carrier-pigeon.png" alt="Logo Free Pidgeon" class="object-contain h-24 w-40">
+                <p class="text-white-600 text-xl">Free Pidgeon</p>
+            </div>
+            <section class="container mx-auto mt-8 p- flex justify-center">
+                <form method="get" action="" class="w-full max-w-lg flex bg-white rounded-full overflow-hidden">
+                    <input 
+                        type="text"
+                        name="q"
+                        placeholder="Pesquisar produtos..."
+                        class="flex-grow p-3 text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded-l-full pl-5">
+                    <button type="submit" 
+                            class="bg-green-400 hover:bg-green-600 text-white p-3 px-6 rounded-r-full transition duration-300 ease-in-out flex items-center justify-center"
+                        >
+                        <i class="fas fa-search mr-2"></i> Pesquisar
+                    </button>
+                </form>
+            </section>
+            <nav class="ml-auto relative z-10 flex space-x-7 items-center">
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300">Home</a>
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300">Vender</a>
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300">Contato</a>
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300">Entrar</a>
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300">Criar conta</a>
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300 flex flex-col"><img src="" alt="Imagem carrinho"></a>
+                <a href="{% url 'COLOCAR URL CERTA' %}" class="text-white-300 hover:text-gray-300 flex flex-col"><img src="" alt="Imagem Menu Hamburger"></a>
+            </nav>
+        </div>
+    </header>
+    <div class="">
+
+    </div>
+    <footer class="bg-green-400 mt-12 p-6 text-center text-white-600">
+        <p>&copy; 2025 Pidgeon Free. Todos os direitos reservados a l'Equipe</p>
+
+    </footer>
+</body>
+</html>
