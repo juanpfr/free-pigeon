@@ -3,40 +3,10 @@
 {% load static %}
 
 {% block content %}
+<section class="category-products-section">
+    <h2>Categoria: {{ categoria.nome }}</h2>
 
-<!-- HERO -->
-<section class="hero-section">
-    <div class="hero-content-wrapper">
-        <h1>FRETE GRÁTIS EM TODO O SITE</h1>
-        <p>Compre agora com as melhores promoções</p>
-        <a href="#" class="btn-shop-now">Comprar Agora</a>
-    </div>
-</section>
-
-<!-- CATEGORIAS -->
-<section class="category-section">
-    <h2>COMPRE POR CATEGORIA</h2>
-    <div class="category-grid">
-        {% for categoria in categorias %}
-        <div class="category-item">
-            <a href="{% url 'categoria' categoria.id %}">
-                {% if categoria.imagem %}
-                <img src="{{ categoria.imagem.url }}" alt="{{ categoria.nome }}">
-                {% else %}
-                <img src="{% static 'img/placeholder-category.jpg' %}" alt="{{ categoria.nome }}">
-                {% endif %}
-                <span>{{ categoria.nome }}</span>
-            </a>
-        </div>
-        {% empty %}
-        <p>Nenhuma categoria cadastrada.</p>
-        {% endfor %}
-    </div>
-</section>
-
-<!-- PRODUTOS -->
-<section class="product-section">
-    <h2>Ofertas do dia</h2>
+    {% if produtos %}
     <div class="product-grid">
         {% for produto in produtos %}
         <a href="{% url 'produto' produto.id %}" class="product-card-link">
@@ -59,9 +29,10 @@
                 </div>
             </div>
         </a>
-        {% empty %}
-        <p>Nenhum produto disponível.</p>
         {% endfor %}
     </div>
+    {% else %}
+    <p>Nenhum produto encontrado nesta categoria.</p>
+    {% endif %}
 </section>
 {% endblock %}

@@ -1,0 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+:root {
+    --header-bg: #ABE16C;
+    --main-bg: #D9D9D9;
+    --card-bg: #FFFFFF;
+    --button-bg: #8EEC67;
+    --text-color: #000000;
+    --font-roboto: 'Roboto', sans-serif;
+}
+
+a{
+    text-decoration: none;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body,
+html {
+    height: 100%;
+    font-family: var(--font-roboto);
+    background-color: var(--main-bg);
+}
+
+#auth-app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.auth-header {
+    background-color: var(--header-bg);
+    padding: 2rem 4rem;
+    flex-shrink: 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    color: var(--text-color);
+}
+
+.logo-icon {
+    width: 84px;
+    height: 83px;
+}
+
+.logo-text {
+    font-family: var(--font-roboto);
+    font-size: 30px;
+    font-weight: 500;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+}
+
+.auth-main {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.auth-card {
+    background-color: var(--card-bg);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    width: 100%;
+    max-width: 546px;
+    min-height: 430px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0px 4px 4px 0px rgba(214, 243, 250, 1);
+}
+
+.auth-card h1 {
+    font-weight: 400;
+    font-size: 40px;
+    line-height: 1.17;
+    color: var(--text-color);
+    margin-bottom: 2.5rem;
+}
+
+.btn-create-account {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    font-size: 35px;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 1.5rem 0;
+    width: 100%;
+    max-width: 404px;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    transition: background-color 0.3s;
+}
+
+.btn-create-account:hover {
+    background-color: #7dce5a;
+}
+
+.link-login {
+    color: var(--text-color);
+    font-size: 25px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.link-login:hover {
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .auth-card {
+        min-height: auto;
+        padding: 2rem;
+    }
+
+    .auth-card h1 {
+        font-size: 32px;
+    }
+
+    .btn-create-account {
+        font-size: 28px;
+        padding: 1.2rem 0;
+    }
+
+    .link-login {
+        font-size: 20px;
+    }
+}

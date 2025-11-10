@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Finalizar Compra - Free Pigeon</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/checkout.css' %}">
+</head>
+
+<body>
+  <div id="app">
+    {% include 'partials/header.html' %}
+
+    <main class="checkout-main">
+      <h1>Finalizar Compra</h1>
+
+      {% if itens %}
+      <div class="checkout-container">
+
+        <!-- Endereço -->
+        <section class="address-section">
+          <h2>Endereço de Entrega</h2>
+          <form action="{% url 'checkout' %}" method="post" class="address-form">
+            {% csrf_token %}
+
+            <div class="form-group">
+              <label for="cep">CEP</label>
+              <input type="text" id="cep" name="cep" placeholder="00000-000"
+                     value="{{ endereco.cep|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="rua">Rua</label>
+              <input type="text" id="rua" name="rua" placeholder="Nome da Rua"
+                     value="{{ endereco.rua|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="numero">Número</label>
+              <input type="text" id="numero" name="numero" placeholder="Nº"
+                     value="{{ endereco.numero|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="bairro">Bairro</label>
+              <input type="text" id="bairro" name="bairro" placeholder="Bairro"
+                     value="{{ endereco.bairro|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="cidade">Cidade</label>
+              <input type="text" id="cidade" name="cidade" placeholder="Cidade"
+                     value="{{ endereco.cidade|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="estado">Estado</label>
+              <input type="text" id="estado" name="estado" placeholder="UF" maxlength="2"
+                     value="{{ endereco.estado|default:'' }}" required>
+            </div>
+
+            <div class="form-group">
+              <label for="complemento">Complemento</label>
+              <input type="text" id="complemento" name="complemento"
+                     placeholder="Apartamento, bloco, etc."
+                     value="{{ endereco.complemento|default:'' }}">
+            </div>
+
+            <h2>Método de Pagamento</h2>
+            <div class="payment-methods">
+              <label><input type="radio" name="pagamento" value="pix" required> PIX</label>
+              <label><input type="radio" name="pagamento" value="cartao"> Cartão de Crédito</label>
+              <label><input type="radio" name="pagamento" value="boleto"> Boleto Bancário</label>
+            </div>
+        </section>
+
+        <!-- Resumo do Pedido -->
+        <aside class="order-summary">
+          <h2>Resumo do Pedido</h2>
+          <ul class="order-items">
+            {% for item in itens %}
+              <li class="order-item">
+                <img src="{{ item.produto.imagem.url|default:'/static/img/sem-imagem.png' }}"
+                     alt="{{ item.produto.nome }}">
+                <div class="details">
+                  <span>{{ item.produto.nome }}</span>
+                  <small>{{ item.quantidade }}x 
+                    R$ {{ item.produto.preco_final|floatformat:2 }}
+                  </small>
+                </div>
+                <span class="subtotal">
+                  R$ {{ item.subtotal|floatformat:2 }}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+
+          <hr>
+
+          <p><strong>Total de Itens:</strong> {{ itens|length }}</p>
+          <p><strong>Total Geral:</strong> R$ {{ total|floatformat:2 }}</p>
+
+          <button type="submit" class="btn-confirm">Finalizar Pedido</button>
+        </aside>
+
+        </form> <!-- fecha o form aqui -->
+      </div>
+
+      {% else %}
+        <div class="checkout-empty">
+          <h2>Seu carrinho está vazio 😕</h2>
+          <p>Adicione produtos antes de finalizar a compra.</p>
+          <a href="{% url 'home' %}" class="btn-back">Voltar para a loja</a>
+        </div>
+      {% endif %}
+    </main>
+
+    {% include 'partials/footer.html' %}
+  </div>
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

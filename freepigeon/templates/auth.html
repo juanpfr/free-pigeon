@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acessar Conta - Free Pigeon</title>
+    <meta name="description" content="Entre ou crie sua conta no Free Pigeon.">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+
+<body>
+    <div id="auth-app">
+        <header class="auth-header">
+            <a href="{% url 'home' %}" class="logo">
+                <img src="{% static 'img/freepigeon.png' %}" alt="Free Pigeon Logo" class="logo-icon" />
+                <span class="logo-text">Free<br>Pigeon</span>
+            </a>
+        </header>
+        <main class="auth-main">
+            <div class="auth-card">
+                <h1>Olá! Para vender, acesse<br>sua conta!</h1>
+                <a href="{% url 'cadastro' %}" class="btn-create-account">Criar Conta</a>
+                <a href="{% url 'login' %}" class="link-login">Entrar</a>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

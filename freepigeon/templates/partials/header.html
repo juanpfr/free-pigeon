@@ -1,0 +1,45 @@
+{% load static %}
+<header class="main-header">
+    <div class="header-content">
+        <!-- LOGO -->
+        <a href="{% url 'home' %}" class="logo">
+            <img src="{% static 'img/freepigeon.png' %}" alt="Free Pigeon Logo" class="logo-icon">
+            <span class="logo-text">Free<br>Pigeon</span>
+        </a>
+
+        <!-- BARRA DE PESQUISA -->
+        <div class="search-section">
+            <form method="get" action="{% url 'buscar' %}" class="search-form">
+                <input type="text" name="q" placeholder="Buscar produtos, marcas e muito mais..."
+                       class="search-input" value="{{ request.GET.q }}">
+                <button type="submit" class="search-button" aria-label="Buscar">
+                    <img src="{% static 'img/search.png' %}" alt="Procurar" class="icon">
+                </button>
+            </form>
+        </div>
+
+        <!-- NAVEGAÇÃO PRINCIPAL -->
+        <nav class="main-nav">
+            <a href="{% url 'home' %}">Início</a>
+            <a href="{% url 'auth' %}">Vender</a>
+            <a href="#">Contato</a>
+
+            {% if usuario_nome %}
+            <a href="{% url 'meus_pedidos' %}" class="orders-btn" title="Meus Pedidos">Pedidos</a>
+            <span class="user-greeting">Olá, {{ usuario_nome }}!</span>
+            <a href="{% url 'logout' %}" class="logout-btn">Sair</a>
+            {% else %}
+            <a href="{% url 'login' %}">Entrar</a>
+            <a href="{% url 'cadastro' %}">Criar conta</a>
+            {% endif %}
+        </nav>
+
+        <!-- ÍCONES -->
+        <nav class="user-actions">
+            <a href="{% url 'ver_carrinho' %}" class="icon-link">
+                <img src="{% static 'img/cart.png' %}" alt="Carrinho" class="icon">
+                <span>Carrinho</span>
+            </a>
+        </nav>
+    </div>
+</header>

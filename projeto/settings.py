@@ -108,7 +108,8 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'app.auth_backends.EmailOrCPFBackend',
+    'freepigeon.auth_backends.EmailOrCPFBackend',  # seu backend customizado
+    'django.contrib.auth.backends.ModelBackend',   # backend padrão do Django
 ]
 
 # Internationalization
@@ -132,3 +133,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ======================================
+# ARQUIVOS ESTÁTICOS E DE MÍDIA
+# ======================================
+
+STATICFILES_DIRS = [BASE_DIR / 'static']  # pasta "static" na raiz do projeto
+STATIC_ROOT = BASE_DIR / 'staticfiles'    # onde o collectstatic junta tudo (deploy)
+
+# Arquivos de mídia (uploads de imagens feitas no admin ou pelo usuário)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

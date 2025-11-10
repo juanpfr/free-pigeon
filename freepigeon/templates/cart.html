@@ -1,0 +1,92 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carrinho - Free Pigeon</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/cart.css' %}">
+</head>
+
+<body>
+  <div id="app">
+    {% include 'partials/header.html' %}
+
+    <main class="cart-main">
+      <h1>Seu Carrinho</h1>
+
+      {% if itens %}
+      <div class="cart-container">
+        <div class="cart-items">
+          {% for item in itens %}
+          <div class="cart-item">
+            <img src="{{ item.produto.imagem.url|default:'/static/img/sem-imagem.png' }}" alt="{{ item.produto.nome }}">
+
+            <div class="cart-item-details">
+              <h2>
+                <a href="{% url 'produto' item.produto.id %}">
+                  {{ item.produto.nome }}
+                </a>
+              </h2>
+              <p class="categoriaNome">Categoria: {{ item.produto.categoria.nome }}</p>
+
+              {% if item.produto.tamanho %}
+              <p>Tamanho: {{ item.produto.tamanho }}</p>
+              {% endif %}
+              {% if item.produto.tensao %}
+              <p>Tensão: {{ item.produto.tensao }}</p>
+              {% endif %}
+              {% if item.produto.comprimento %}
+              <p>Comprimento: {{ item.produto.comprimento }} cm</p>
+              {% endif %}
+
+              <div class="price-qty">
+                <span class="unit-price">
+                  {% if item.produto.desconto %}
+                  <del>R$ {{ item.produto.valor|floatformat:2 }}</del>
+                  <strong>R$ {{ item.produto.preco_final|floatformat:2 }}</strong>
+                  {% else %}
+                  <strong>R$ {{ item.produto.valor|floatformat:2 }}</strong>
+                  {% endif %}
+                </span>
+              </div>
+
+              <form action="{% url 'remover_do_carrinho' item.produto.id %}" method="post" class="remove-form">
+                {% csrf_token %}
+                <button type="submit" class="remove-btn">Remover</button>
+              </form>
+            </div>
+
+            <div class="cart-item-total">
+              <strong>Total: R$ {{ item.subtotal|floatformat:2 }}</strong>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <aside class="cart-summary">
+          <h2>Resumo do Pedido</h2>
+          <p>Total de Itens: {{ itens|length }}</p>
+          <p><strong>Total: R$ {{ total|floatformat:2 }}</strong></p>
+
+
+          <a href="{% url 'checkout' %}" class="btn-checkout">Finalizar Compra</a>
+        </aside>
+      </div>
+      {% else %}
+      <div class="cart-empty">
+        <h2>Seu carrinho está vazio 🛒</h2>
+        <p>Explore nossos <a href="{% url 'home' %}">produtos</a> e adicione algo!</p>
+      </div>
+      {% endif %}
+    </main>
+
+    {% include 'partials/footer.html' %}
+  </div>
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+
+</html>

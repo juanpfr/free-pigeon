@@ -1,76 +1,63 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
+
 <head>
+    {% load static %}
     <meta charset="UTF-8">
-    <title>Login - FreePigeon</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f3f3;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        form {
-            background: #fff;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 300px;
-        }
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #2e86de;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #2163ad;
-        }
-        p {
-            text-align: center;
-        }
-        .erro {
-            color: red;
-            text-align: center;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Free Pigeon</title>
+    <meta name="description" content="Acesse sua conta no Free Pigeon.">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
 </head>
+
 <body>
+    <div id="login-app">
+        <header class="login-header">
+            <div class="header-top">
+                <a href="{% url 'home' %}" class="logo">
+                    <img src="{% static 'img/freepigeon.png' %}" alt="Free Pigeon Logo" class="logo-icon" />
+                    <span class="logo-text">Free<br>Pigeon</span>
+                </a>
 
-<form method="POST">
-    {% csrf_token %}
-    <h2>Login</h2>
+                {% if veio_do_auth %}
+                <a href="{% url 'auth' %}" class="back-link">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Voltar</span>
+                </a>
+                {% endif %}
+            </div>
+            <h1 class="header-title">Acesse sua conta e compre<br>com frete grátis!</h1>
+        </header>
 
-    {% if mensagem_erro %}
-        <p class="erro">{{ mensagem_erro }}</p>
-    {% endif %}
+        <main class="login-main">
+            <div class="login-card">
+                <form method="POST">
+                    {% csrf_token %}
+                    <h2 class="form-title">Login</h2>
 
-    <label for="username">E-mail ou CPF:</label>
-    <input type="text" name="username" id="username" required>
+                    {% if mensagem_erro %}
+                    <p class="erro">{{ mensagem_erro }}</p>
+                    {% endif %}
 
-    <label for="senha">Senha:</label>
-    <input type="password" name="senha" id="senha" required>
+                    <div class="form-group">
+                        <label for="username">E-mail ou CPF</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
 
-    <button type="submit">Entrar</button>
+                    <div class="form-group">
+                        <label for="senha">Senha</label>
+                        <input type="password" id="senha" name="senha" required>
+                    </div>
 
-    <p>Ainda não tem conta? <a href="{% url 'cadastro' %}">Cadastre-se</a></p>
-</form>
+                    <button type="submit" class="btn-continue">Entrar</button>
 
+                    <p class="signup-text">
+                        Ainda não tem conta? <a href="{% url 'cadastro' %}">Cadastre-se</a>
+                    </p>
+                </form>
+            </div>
+        </main>
+    </div>
 </body>
+
 </html>

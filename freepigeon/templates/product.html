@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ produto.nome }} - Free Pigeon</title>
+  <meta name="description" content="{{ produto.descricao|default:'Detalhes do produto.' }}">
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/product.css' %}">
+</head>
+
+<body>
+  <div id="app">
+    {% include 'partials/header.html' %}
+
+    <main class="product-main">
+      <div class="product-view-container">
+        <div class="product-gallery">
+          <div class="main-image-container">
+            <img src="{{ produto.imagem.url|default:'/static/img/sem-imagem.png' }}" alt="{{ produto.nome }}">
+            {% if produto.desconto %}
+              <span class="discount-badge">-{{ produto.desconto }}%</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="product-details-wrapper">
+          <div class="product-details">
+            <h1>{{ produto.nome }}</h1>
+
+            <div class="product-specs">
+              <h2>Informações do produto:</h2>
+              <div class="specs-grid">
+                {% if produto.tamanho %}
+                  <p><strong>Tamanho:</strong> {{ produto.tamanho }}</p>
+                {% endif %}
+                {% if produto.tensao %}
+                  <p><strong>Tensão:</strong> {{ produto.tensao }}</p>
+                {% endif %}
+                {% if produto.comprimento %}
+                  <p><strong>Comprimento:</strong> {{ produto.comprimento }} cm</p>
+                {% endif %}
+                {% if produto.peso %}
+                  <p><strong>Peso:</strong> {{ produto.peso }} g</p>
+                {% endif %}
+                {% if produto.descricao %}
+                  <p><strong>Descrição:</strong> {{ produto.descricao }}</p>
+                {% endif %}
+              </div>
+            </div>
+
+            <p class="product-price">
+              {% if produto.desconto %}
+                <del>R$ {{ produto.valor|floatformat:2 }}</del>
+                <strong>R$ {{ produto.preco_final|floatformat:2 }}</strong>
+              {% else %}
+                <strong>R$ {{ produto.valor|floatformat:2 }}</strong>
+              {% endif %}
+            </p>
+          </div>
+
+          <div class="purchase-box">
+            <div class="seller-info">
+              <h3>Informações de venda</h3>
+              <p>Vendido por: {{ produto.loja.nome|default:"Loja Parceira" }}</p>
+              <p>Categoria: {{ produto.categoria.nome }}</p>
+            </div>
+
+            <form action="{% url 'adicionar_ao_carrinho' produto.id %}" method="post">
+              {% csrf_token %}
+              <label for="quantidade">Quantidade:</label>
+              <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="{{ produto.q_estoque }}">
+              <br>
+              <button type="submit" class="btn-add-to-cart">Adicionar ao carrinho</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <section class="related-items-section">
+        <h2>Produtos relacionados</h2>
+        <div class="product-grid">
+          {% for rel in relacionados %}
+            <a href="{% url 'produto_detalhe' rel.id %}" class="product-card">
+              <img src="{{ rel.imagem.url|default:'/static/img/sem-imagem.png' }}" alt="{{ rel.nome }}">
+              <h3>{{ rel.nome }}</h3>
+              <p>R$ {{ rel.preco_final|floatformat:2 }}</p>
+            </a>
+          {% empty %}
+            <p>Nenhum produto relacionado encontrado.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </main>
+
+    {% include 'partials/footer.html' %}
+  </div>
+
+  <script src="{% static 'js/main.js' %}"></script>
+</body>
+</html>

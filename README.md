@@ -24,7 +24,7 @@ Acesse:
 
 ## ⚙️ Instalação Rápida
 ```bash
-git clone https://github.com/seuusuario/free-pigeon.git
+git clone https://github.com/juanpfr/free-pigeon.git
 cd free-pigeon
 python -m venv venv
 source venv/bin/activate
