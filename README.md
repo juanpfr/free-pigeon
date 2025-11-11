@@ -9,7 +9,7 @@ Acesse:
 - [Introdução](./docs/01%20-%20Introducao)
 - [Documentação Técnica (DER, Casos de Uso, Instalação)](./docs/02%20-%20Documentacao_Tecnica)
 - [Database](./docs/03%20-%20Database)
-- [API](./docs/04%20-%20API)
+- [API & Funcionalidades](./docs/04%20-%20API%20&%20Funcionalidades)
 - [Apresentação Final](./docs/05%20-%20Apresentacao)
 
 ---
