@@ -13,7 +13,7 @@
 ## Caso de Uso 2 – Compra de Produto
 **Ator:** Cliente  
 **Fluxo principal:**
-1. O cliente navega no catálogo e adiciona itens ao carrinho.
+1. O cliente navega no catálogo, se cadastra ou faz autenticação e adiciona itens ao carrinho.
 2. Realiza o checkout e escolhe o método de pagamento.
 3. O sistema confirma o pagamento e gera o pedido.
 **Pós-condição:** O pedido é registrado e o estoque atualizado.

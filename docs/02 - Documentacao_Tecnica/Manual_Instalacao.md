@@ -3,20 +3,33 @@
 ## Pré-requisitos
 - Python 3.10+
 - PostgreSQL
-- Redis
-- Virtualenv
 
 ## 1️⃣ Clonar o repositório
 ```bash
-git clone https://github.com/juanpfr/free-pigeon.git
+# Clone o repositório
+git clone https://github.com/juanpfr/free-pigeon/
+
+# Acesse a pasta do projeto
 cd free-pigeon
+
+# Crie o ambiente virtual
+python -m venv venv
+.\venv\Scripts\activate  # (Windows)
+source venv/bin/activate # (Linux/Mac)
+
+# Caso ocorra algum erro no comando acima, tente este comando para liberar ambientes virtuais:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ## 2️⃣ Criar e ativar o ambiente virtual
 ```bash
+# Crie o ambiente virtual
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-.\venv\Scripts\activate    # Windows
+.\venv\Scripts\activate  # (Windows)
+source venv/bin/activate # (Linux/Mac)
+
+# Caso ocorra algum erro no comando acima, tente este comando para liberar ambientes virtuais:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ## 3️⃣ Instalar dependências
@@ -25,7 +38,7 @@ python -m pip install -r requirements.txt
 ```
 
 ## 4️⃣ Configurar o banco de dados
-Crie o banco no PostgreSQL e atualize o arquivo `.env`:
+Crie o banco no PostgreSQL e crie/atualize o arquivo `.env`:
 
 ```
 DB_NAME=freepigeon_db

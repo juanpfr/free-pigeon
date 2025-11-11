@@ -26,71 +26,79 @@
 3. Dá uma nota de 0 a 5 e, opcionalmente, um comentário.
 **Pós-condição:** O produto tem sua média de avaliação atualizada.
 
-# 🗂️ Estrutura Inicial do Projeto Django
+# 🗂️ Estrutura do Projeto
 
 ```
-free-pigeon/
+ffree-pigeon/
 │
+├── docs/                                       # Documentação do Projeto
+├── freepigeon/                                 # Diretório do app do projeto
+├── media/                                      # Diretórios com arquivos de mídia cadastrados no banco de dados
+├── produtos/                                   # Produtos cadastrados no banco de dados
+├── projeto/                                    # Diretório do projeto Django padrão sem adição de arquivos
+├── venv/                                       # Diretório do ambiente virtual (pode ter outro nome) sem adição/modificação de arquivos
+├── .env                                        # Arquivo de variáveis de ambiente para conexão com o banco de dados
+├── .env.exemple
+├── .gitignore
 ├── manage.py
-├── .env.example
+├── README.md
 ├── requirements.txt
-├── docs/
-│
-├── freepigeon/                # Configurações principais do Django
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-│
-├── apps/
-│   ├── users/                 # Gerenciamento de usuários e perfis
-│   ├── stores/                # Lojas e vendedores
-│   ├── products/              # Produtos e categorias
-│   ├── orders/                # Pedidos e carrinhos
-│   ├── payments/              # Pagamentos e integrações
-│   └── reviews/               # Avaliações e feedbacks
-└── static/
+
 ```
 
 ---
 
 ### 🧰 Tecnologias Utilizadas
-- **Backend:** Django, Django REST Framework, Celery, Redis  
-- **Banco de Dados:** PostgreSQL  
-- **Frontend:** Vue.js, Tailwind CSS  
-- **Integrações:** Stripe, AWS S3 (django-storages, boto3)
+- **Backend:** Django
+- **Frontend:** HTML5, CSS3
+- **Banco de Dados:** PostgreSQL
+- **Integrações:** CorreiosAPI, GoogleAuth
 
 # ⚙️ Manual de Instalação – Free Pigeon
 
 ## Pré-requisitos
 - Python 3.10+
 - PostgreSQL
-- Redis
-- Virtualenv
 
 ## 1️⃣ Clonar o repositório
 ```bash
-git clone https://github.com/juanpfr/free-pigeon.git
+# Clone o repositório
+git clone https://github.com/juanpfr/free-pigeon/
+
+# Acesse a pasta do projeto
 cd free-pigeon
+
+# Crie o ambiente virtual
+python -m venv venv
+.\venv\Scripts\activate  # (Windows)
+source venv/bin/activate # (Linux/Mac)
+
+# Caso ocorra algum erro no comando acima, tente este comando para liberar ambientes virtuais:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ## 2️⃣ Criar e ativar o ambiente virtual
 ```bash
+# Crie o ambiente virtual
 python -m venv venv
-source venv/bin/activate  # Linux/Mac
-venv\Scripts\activate    # Windows
+.\venv\Scripts\activate  # (Windows)
+source venv/bin/activate # (Linux/Mac)
+
+# Caso ocorra algum erro no comando acima, tente este comando para liberar ambientes virtuais:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ## 3️⃣ Instalar dependências
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## 4️⃣ Configurar o banco de dados
-Crie o banco no PostgreSQL e atualize o arquivo `.env`:
+Crie o banco no PostgreSQL e crie/atualize o arquivo `.env`:
 
 ```
-DB_NAME=freepigeon
-DB_USER=freepigeon_admin
+DB_NAME=freepigeon_db
+DB_USER=nome_do_seu_usuario_aqui
 DB_PASSWORD=coloque_sua_senha_aqui
 DB_HOST=localhost
 DB_PORT=5432

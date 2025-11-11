@@ -1,14 +1,18 @@
-# 🕊️ Free Pigeon — Banco de Dados E-Market
+# 🕊️ Free Pigeon — Banco de Dados E‑Market
 
-Este projeto define o esquema de banco de dados relacional para a aplicação **Free Pigeon**, um sistema de e-commerce (E-Market) voltado para a compra e venda de produtos em lojas virtuais.  
-O banco foi projetado para garantir **organização**, **integridade referencial** e **escalabilidade** entre usuários, lojas, produtos, pedidos e avaliações.
+Este projeto define o esquema de banco de dados relacional para a aplicação **Free Pigeon**, um sistema de e‑commerce (E‑Market) voltado para a compra e venda de produtos.  
+O objetivo é garantir **organização**, **integridade referencial** e **escalabilidade**, conectando usuários, produtos, categorias, pedidos, carrinhos e lojas.
 
 ---
 
 ## 📘 Visão Geral
 
-O banco de dados é estruturado em torno de **usuários**, **lojas**, **produtos** e **pedidos**, com suporte a funcionalidades de **carrinho de compras**, **pagamentos**, **avaliações** e **endereços**.  
-Cada tabela cumpre uma função específica, e todas estão conectadas por **chaves estrangeiras** para manter a consistência dos dados.
+O banco é estruturado em torno de **usuários**, **produtos**, **categorias**, **pedidos**, **carrinhos** e **lojas**, permitindo:  
+- Cadastro e login de usuários;  
+- Exibição e compra de produtos;  
+- Organização por categorias;  
+- Carrinho de compras dinâmico;  
+- Registro de pedidos e endereços.  
 
 ---
 
@@ -24,32 +28,29 @@ Abaixo está o diagrama que representa todas as tabelas e seus relacionamentos:
 
 ## 🏗️ Estrutura do Banco de Dados
 
-### 1. 🧍‍♂️ Tabela `usuario`
-Armazena informações dos usuários (clientes e vendedores).
+### 1. 🧍‍♂️ `Usuario`
+Armazena os dados dos usuários registrados.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_usuario` | SERIAL (PK) | Identificador único. |
+| `id` | SERIAL (PK) | Identificador único. |
 | `nome` | VARCHAR(255) | Nome completo. |
-| `email` | VARCHAR(255) | E-mail único. |
+| `email` | VARCHAR(255) | E‑mail único. |
+| `senha` | VARCHAR(255) | Senha criptografada. |
 | `telefone` | VARCHAR(20) | Telefone de contato. |
 | `cpf` | VARCHAR(14) | CPF único. |
-| `senha` | VARCHAR(255) | Senha criptografada. |
-| `id_loja` | INT (FK) | Loja associada (opcional). |
-| `id_endereco` | INT (FK) | Endereço principal. |
-| `id_carrinho` | INT (FK) | Carrinho ativo. |
 
 ---
 
-### 2. 🏠 Tabela `endereco`
-Guarda dados de localização de usuários e lojas.
+### 2. 🏠 `Endereco`
+Registra os endereços de entrega e cobrança.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_endereco` | SERIAL (PK) | Identificador. |
+| `id` | SERIAL (PK) | Identificador. |
 | `complemento` | VARCHAR(255) | Detalhes extras. |
 | `rua` | VARCHAR(255) | Nome da rua. |
-| `numero` | INT | Número da residência. |
+| `numero` | INT | Número. |
 | `bairro` | VARCHAR(255) | Bairro. |
 | `cidade` | VARCHAR(255) | Cidade. |
 | `estado` | VARCHAR(255) | Estado. |
@@ -57,147 +58,100 @@ Guarda dados de localização de usuários e lojas.
 
 ---
 
-### 3. 🏬 Tabela `loja`
-Representa as lojas registradas.
+### 3. 🏬 `Loja`
+Representa as lojas vendedoras.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_loja` | SERIAL (PK) | Identificador da loja. |
-| `id_usuario` | INT (FK) | Dono da loja. |
+| `id` | SERIAL (PK) | Identificador da loja. |
 | `nome` | VARCHAR(255) | Nome da loja. |
+| `descricao` | VARCHAR(255) | Descrição breve. |
 
 ---
 
-### 4. 🏷️ Tabela `categoria`
-Categorias de produtos.
+### 4. 🏷️ `Categoria`
+Agrupa os produtos por tipo.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_categoria` | SERIAL (PK) | Identificador. |
+| `id` | SERIAL (PK) | Identificador. |
 | `nome` | VARCHAR(255) | Nome da categoria. |
 
 ---
 
-### 5. 📦 Tabela `produto`
-Informações dos produtos à venda.
+### 5. 📦 `Produto`
+Armazena as informações de cada produto.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_produto` | SERIAL (PK) | Identificador. |
+| `id` | SERIAL (PK) | Identificador. |
 | `nome` | VARCHAR(255) | Nome do produto. |
 | `cor` | VARCHAR(255) | Cor (opcional). |
 | `peso` | NUMERIC(10,2) | Peso. |
 | `valor` | NUMERIC(10,2) | Preço. |
-| `desconto` | NUMERIC(5,2) | Percentual de desconto. |
+| `desconto` | NUMERIC(5,2) | Desconto percentual. |
 | `tamanho` | VARCHAR(50) | Tamanho (opcional). |
 | `avaliacao_media` | NUMERIC(2,1) | Média de avaliações. |
 | `q_estoque` | INT | Quantidade em estoque. |
-| `id_loja` | INT (FK) | Loja vendedora. |
-| `id_categoria` | INT (FK) | Categoria do produto. |
+| `id_loja` | INT (FK) | Loja que vende o produto. |
+| `id_categoria` | INT (FK) | Categoria associada. |
 
 ---
 
-### 6. 🧾 Tabela `pedido`
-Pedidos realizados pelos usuários.
+### 6. 🛒 `Carrinho`
+Carrinho de compras ativo de cada usuário.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_pedido` | SERIAL (PK) | Identificador. |
-| `data_efetuado` | DATE | Data do pedido. |
-| `valor_total` | NUMERIC(10,2) | Valor total. |
-| `status` | VARCHAR(50) | Status (Ex: “Em andamento”). |
-| `id_usuario` | INT (FK) | Usuário comprador. |
-
----
-
-### 7. 🔗 Tabela `pedido_produto`
-Relaciona produtos e pedidos (itens comprados).
-
-| Campo | Tipo | Descrição |
-|-------|------|------------|
-| `id_pedido` | INT (FK) | Pedido. |
-| `id_produto` | INT (FK) | Produto comprado. |
-| `quantidade` | INT | Quantidade adquirida. |
-| `preco_unitario` | NUMERIC(10,2) | Preço do item no momento da compra. |
-| `desconto_aplicado` | NUMERIC(5,2) | Desconto aplicado. |
-
----
-
-### 8. 💳 Tabela `pagamento`
-Detalhes dos pagamentos.
-
-| Campo | Tipo | Descrição |
-|-------|------|------------|
-| `id_pagamento` | SERIAL (PK) | Identificador. |
-| `metodo` | VARCHAR(50) | Método de pagamento. |
-| `status` | VARCHAR(50) | Status do pagamento. |
-| `valor_pago` | NUMERIC(10,2) | Valor pago. |
-| `parcela` | INT | Número de parcelas. |
-| `data_pagamento` | DATE | Data do pagamento. |
-| `id_pedido` | INT (FK) | Pedido relacionado. |
-
----
-
-### 9. ⭐ Tabela `avaliacao`
-Avaliações feitas pelos usuários.
-
-| Campo | Tipo | Descrição |
-|-------|------|------------|
-| `id_avaliacao` | SERIAL (PK) | Identificador. |
-| `id_produto` | INT (FK) | Produto avaliado. |
-| `id_usuario` | INT (FK) | Autor da avaliação. |
-| `nota` | INT | Nota (0–5). |
-| `comentario` | VARCHAR(200) | Comentário. |
-
----
-
-### 10. 🛒 Tabela `carrinho`
-Carrinho de compras ativo.
-
-| Campo | Tipo | Descrição |
-|-------|------|------------|
-| `id_carrinho` | SERIAL (PK) | Identificador. |
+| `id` | SERIAL (PK) | Identificador. |
 | `id_usuario` | INT (FK) | Usuário dono do carrinho. |
 | `data_adicao` | DATE | Data de criação. |
 
 ---
 
-### 11. 🧩 Tabela `carrinho_produto`
-Produtos adicionados ao carrinho.
+### 7. 🧩 `CarrinhoProduto`
+Itens adicionados ao carrinho.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_carrinho` | INT (FK, PK) | Carrinho. |
-| `id_produto` | INT (FK, PK) | Produto. |
-| `quantidade` | INT | Quantidade. |
+| `id_carrinho` | INT (FK, PK) | Carrinho associado. |
+| `id_produto` | INT (FK, PK) | Produto adicionado. |
+| `quantidade` | INT | Quantidade do produto. |
 
 ---
 
-### 12. 🏪 Tabela `loja_produto`
-Relaciona lojas e produtos.
+### 8. 🧾 `Pedido`
+Pedidos efetuados pelos usuários.
 
 | Campo | Tipo | Descrição |
 |-------|------|------------|
-| `id_loja` | INT (FK, PK) | Loja. |
-| `id_produto` | INT (FK, PK) | Produto. |
+| `id` | SERIAL (PK) | Identificador. |
+| `data_efetuado` | DATE | Data do pedido. |
+| `valor_total` | NUMERIC(10,2) | Valor total. |
+| `status` | VARCHAR(50) | Status do pedido. |
+| `id_usuario` | INT (FK) | Usuário comprador. |
+| `id_endereco` | INT (FK) | Endereço de entrega. |
+
+---
+
+### 9. 🔗 `PedidoProduto`
+Relaciona produtos com pedidos.
+
+| Campo | Tipo | Descrição |
+|-------|------|------------|
+| `id_pedido` | INT (FK, PK) | Pedido associado. |
+| `id_produto` | INT (FK, PK) | Produto comprado. |
+| `quantidade` | INT | Quantidade comprada. |
+| `preco_unitario` | NUMERIC(10,2) | Valor unitário no momento da compra. |
+| `desconto_aplicado` | NUMERIC(5,2) | Desconto aplicado. |
 
 ---
 
 ## 🔗 Relacionamentos Principais
 
-- **Usuário ↔ Loja:** 1:N  
-- **Usuário ↔ Pedido:** 1:N  
-- **Pedido ↔ Pedido_Produto ↔ Produto:** N:M  
+- **Usuário ↔ Carrinho:** 1:1  
 - **Carrinho ↔ Produto:** N:M  
-- **Loja ↔ Produto:** N:M  
-- **Produto ↔ Avaliação:** 1:N  
-
----
-
-## ⚙️ Tecnologias Recomendadas
-
-- **Banco de dados:** PostgreSQL  
-- **Ferramentas:** DBeaver, PgAdmin  
-- **ORMs sugeridos:** Prisma, Sequelize, TypeORM  
-
----
+- **Usuário ↔ Pedido:** 1:N  
+- **Pedido ↔ Produto:** N:M  
+- **Produto ↔ Loja:** N:1  
+- **Produto ↔ Categoria:** N:1  

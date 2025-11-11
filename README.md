@@ -15,20 +15,33 @@ Acesse:
 ---
 
 ## 🚀 Tecnologias
-- **Backend:** Django, Django REST Framework, Celery, Redis  
-- **Frontend:** Vue.js, TailwindCSS  
-- **Banco de Dados:** PostgreSQL  
-- **Integrações:** Stripe, AWS S3  
+- **Backend:** Django
+- **Frontend:** HTML5, CSS3
+- **Banco de Dados:** PostgreSQL
+- **Integrações:** CorreiosAPI, GoogleAuth
 
 ---
 
 ## ⚙️ Instalação Rápida
 ```bash
-git clone https://github.com/juanpfr/free-pigeon.git
+# Clone o repositório
+git clone https://github.com/juanpfr/free-pigeon/
+
+# Acesse a pasta do projeto
 cd free-pigeon
+
+# Crie o ambiente virtual
 python -m venv venv
-source venv/bin/activate
+.\venv\Scripts\activate  # (Windows)
+source venv/bin/activate # (Linux/Mac)
+
+# Caso ocorra algum erro no comando acima, tente este comando para liberar ambientes virtuais:
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Instale as dependências
 pip install -r requirements.txt
+
+# Execute o projeto
 python manage.py runserver
 ```
 
