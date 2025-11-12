@@ -121,5 +121,48 @@
   </div>
 
   <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const cepInput = document.getElementById('cep');
+    const ruaInput = document.getElementById('rua');
+    const bairroInput = document.getElementById('bairro');
+    const cidadeInput = document.getElementById('cidade');
+    const estadoInput = document.getElementById('estado');
+
+    function limparCampos() {
+      ruaInput.value = "";
+      bairroInput.value = "";
+      cidadeInput.value = "";
+      estadoInput.value = "";
+    }
+
+    cepInput.addEventListener('blur', function() {
+      let cep = cepInput.value.replace(/\D/g, '');
+      if (cep.length !== 8) {
+        limparCampos();
+        return;
+      }
+
+      fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then(response => response.json())
+        .then(data => {
+          if (!data.erro) {
+            ruaInput.value = data.logradouro;
+            bairroInput.value = data.bairro;
+            cidadeInput.value = data.localidade;
+            estadoInput.value = data.uf;
+          } else {
+            limparCampos();
+            alert("CEP não encontrado!");
+          }
+        })
+        .catch(() => {
+          limparCampos();
+          alert("Erro ao consultar o CEP.");
+        });
+    });
+  });
+</script>
+
 </body>
 </html>

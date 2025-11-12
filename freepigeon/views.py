@@ -240,3 +240,22 @@ def meus_pedidos(request):
         'pedidos': pedidos,
         'usuario_nome': usuario.nome
     })
+
+# ============================================================
+# ViaCEP
+# ============================================================
+
+from django.shortcuts import render
+from .utils import buscar_cep
+
+def busca_cep_view(request):
+    endereco = None
+    erro = None
+
+    if request.method == "POST":
+        cep = request.POST.get("cep")
+        endereco = buscar_cep(cep)
+        if not endereco:
+            erro = "CEP não encontrado ou inválido."
+
+    return render(request, "cep/busca_cep.html", {"endereco": endereco, "erro": erro})
