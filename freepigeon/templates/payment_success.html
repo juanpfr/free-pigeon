@@ -1,0 +1,29 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pagamento Confirmado - Free Pigeon</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <div id="app">
+    {% include 'partials/header.html' %}
+    
+    <main style="text-align: center; padding: 50px 20px;">
+      {% if success %}
+        <h1>✓ Pagamento Realizado com Sucesso!</h1>
+        <p>Obrigado pela sua compra. Você receberá um email de confirmação em breve.</p>
+        <p><strong>ID da Transação:</strong> {{ session.id }}</p>
+        <a href="{% url 'home' %}" class="btn">Voltar para a loja</a>
+      {% else %}
+        <h1>Erro no Pagamento</h1>
+        <p>{{ error }}</p>
+        <a href="{% url 'checkout' %}" class="btn">Tentar novamente</a>
+      {% endif %}
+    </main>
+    
+    {% include 'partials/footer.html' %}
+  </div>
+</body>
+</html>

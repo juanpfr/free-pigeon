@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -21,6 +21,12 @@ urlpatterns = [
     path('carrinho/remover/<int:produto_id>/', views.remover_do_carrinho, name='remover_do_carrinho'),
 
     # checkout / pedidos
-    path('checkout/', views.checkout_view, name='checkout'),
+    path('checkout/', views.checkout_page, name='checkout'),  # ← MUDOU (era checkout_view)
     path('meus-pedidos/', views.meus_pedidos, name='meus_pedidos'),
+
+    # stripe - Checkout Session
+    path('create-checkout-session/', views.create_checkout_session, name='create_checkout_session'),  # ← NOVO
+    path('pagamento/sucesso/', views.payment_success, name='payment_success'),  # ← NOVO
+    path('webhook/', views.stripe_webhook, name='stripe_webhook'),
+    path('stripe/', include('djstripe.urls', namespace='djstripe')),
 ]
