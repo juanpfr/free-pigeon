@@ -415,6 +415,7 @@ def create_checkout_session(request):
 def payment_success(request):
     """Página de sucesso após pagamento"""
     session_id = request.GET.get('session_id')
+    usuario_nome = request.session.get('usuario_nome')  # ← ADICIONAR
     
     if session_id:
         try:
@@ -462,23 +463,27 @@ def payment_success(request):
                     'pedido': pedido,
                     'session_id': session_id,
                     'total': session.amount_total / 100,
+                    'usuario_nome': usuario_nome,  # ← ADICIONAR
                 }
                 return render(request, 'payment_success.html', context)
             else:
                 context = {
                     'success': False,
-                    'error': 'Pagamento ainda não foi concluído'
+                    'error': 'Pagamento ainda não foi concluído',
+                    'usuario_nome': usuario_nome,  # ← ADICIONAR
                 }
                 return render(request, 'payment_success.html', context)
             
         except Exception as e:
             context = {
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'usuario_nome': usuario_nome,  # ← ADICIONAR
             }
             return render(request, 'payment_success.html', context)
     
     return redirect('home')
+
 
 @csrf_exempt
 @require_POST
