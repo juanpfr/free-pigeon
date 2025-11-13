@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="{% static 'css/checkout.css' %}">
   <script src="https://js.stripe.com/v3/"></script>
   <style>
-    /* Estilos para o loading e mensagens de erro */
     .loading {
       display: none;
       position: fixed;
@@ -58,6 +57,45 @@
       background-color: #ccc;
       cursor: not-allowed;
     }
+
+    .payment-methods {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 15px 0;
+    }
+
+    .payment-methods label {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .payment-methods label:hover {
+      border-color: #3498db;
+      background-color: #f8f9fa;
+    }
+
+    .payment-methods input[type="radio"]:checked + span {
+      font-weight: bold;
+    }
+
+    .payment-methods label input {
+      margin-right: 10px;
+    }
+
+    .payment-info {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #f0f8ff;
+      border-radius: 6px;
+    }
   </style>
 </head>
 
@@ -71,10 +109,8 @@
       {% if itens %}
       <div class="checkout-container">
 
-        <!-- Mensagem de Erro -->
         <div id="error-message" class="error-message"></div>
 
-        <!-- Endereço -->
         <section class="address-section">
           <h2>Endereço de Entrega</h2>
           <form id="checkout-form" class="address-form">
@@ -126,18 +162,22 @@
             <h2>Método de Pagamento</h2>
             <div class="payment-methods">
               <label>
-                <input type="radio" name="pagamento" value="cartao" checked required> 
-                Cartão de Crédito (Stripe)
+                <input type="radio" name="pagamento" value="pix" checked required>
+                <span>🔷 PIX - Pagamento instantâneo</span>
+              </label>
+              
+              <label>
+                <input type="radio" name="pagamento" value="cartao" required>
+                <span>💳 Cartão de Crédito</span>
               </label>
             </div>
             
-            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">
-              ✓ Pagamento seguro processado pelo Stripe<br>
-              ✓ Aceita todos os principais cartões de crédito
-            </p>
+            <div class="payment-info">
+              <strong>PIX:</strong> Você receberá um QR Code para pagar instantaneamente<br>
+              <strong>Cartão:</strong> Processamento seguro via Stripe
+            </div>
         </section>
 
-        <!-- Resumo do Pedido -->
         <aside class="order-summary">
           <h2>Resumo do Pedido</h2>
           <ul class="order-items">
@@ -164,7 +204,7 @@
           <p><strong>Total Geral:</strong> R$ {{ total|floatformat:2 }}</p>
 
           <button type="submit" id="submit-button" class="btn-confirm">
-            Pagar com Stripe
+            Finalizar Pagamento
           </button>
         </aside>
 
@@ -182,7 +222,6 @@
 
     {% include 'partials/footer.html' %}
 
-    <!-- Loading Overlay -->
     <div id="loading" class="loading">
       <div class="loading-spinner"></div>
     </div>
@@ -191,16 +230,13 @@
   <script src="{% static 'js/main.js' %}"></script>
   
   <script>
-    // Inicializar Stripe com sua chave pública
     const stripe = Stripe('{{ stripe_public_key }}');
     
-    // Elementos do DOM
     const checkoutForm = document.getElementById('checkout-form');
     const submitButton = document.getElementById('submit-button');
     const errorMessage = document.getElementById('error-message');
     const loadingOverlay = document.getElementById('loading');
 
-    // Função para mostrar erro
     function showError(message) {
       errorMessage.textContent = message;
       errorMessage.classList.add('active');
@@ -209,7 +245,6 @@
       }, 5000);
     }
 
-    // Função para obter o CSRF token
     function getCookie(name) {
       let cookieValue = null;
       if (document.cookie && document.cookie !== '') {
@@ -225,26 +260,21 @@
       return cookieValue;
     }
 
-    // Handler do formulário
     checkoutForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Validar campos obrigatórios
       if (!checkoutForm.checkValidity()) {
         checkoutForm.reportValidity();
         return;
       }
 
-      // Desabilitar botão e mostrar loading
       submitButton.disabled = true;
       submitButton.textContent = 'Processando...';
       loadingOverlay.classList.add('active');
 
       try {
-        // Coletar dados do formulário
         const formData = new FormData(checkoutForm);
         
-        // Enviar requisição para criar sessão do Stripe
         const response = await fetch('{% url "create_checkout_session" %}', {
           method: 'POST',
           headers: {
@@ -260,7 +290,6 @@
           throw new Error(data.error);
         }
 
-        // Redirecionar para o checkout do Stripe
         const result = await stripe.redirectToCheckout({
           sessionId: data.sessionId
         });
@@ -271,16 +300,15 @@
 
       } catch (error) {
         console.error('Erro:', error);
-        showError(error.message || 'Ocorreu um erro ao processar o pagamento. Tente novamente.');
+        showError(error.message || 'Ocorreu um erro ao processar o pagamento.');
         
-        // Reabilitar botão
         submitButton.disabled = false;
-        submitButton.textContent = 'Pagar com Stripe';
+        submitButton.textContent = 'Finalizar Pagamento';
         loadingOverlay.classList.remove('active');
       }
     });
 
-    // Buscar CEP (se você já tem essa funcionalidade)
+    // Buscar CEP
     const cepInput = document.getElementById('cep');
     if (cepInput) {
       cepInput.addEventListener('blur', async function() {

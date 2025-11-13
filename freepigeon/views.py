@@ -297,9 +297,8 @@ def checkout_page(request):
 #@login_required
 @require_POST
 def create_checkout_session(request):
-    """Cria uma Checkout Session no Stripe"""
+    """Cria uma Checkout Session no Stripe com suporte a PIX"""
     try:
-        # Buscar usuário da sessão
         usuario_id = request.session.get('usuario_id')
         
         if not usuario_id:
@@ -307,7 +306,7 @@ def create_checkout_session(request):
         
         usuario = Usuario.objects.get(id=usuario_id)
         
-        # Pegar dados do endereço do formulário
+        # Pegar dados do endereço
         cep = request.POST.get('cep')
         rua = request.POST.get('rua')
         numero = request.POST.get('numero')
@@ -316,7 +315,10 @@ def create_checkout_session(request):
         estado = request.POST.get('estado')
         complemento = request.POST.get('complemento', '')
         
-        # Salvar ou atualizar endereço do usuário
+        # Pegar método de pagamento escolhido
+        metodo_pagamento = request.POST.get('pagamento', 'cartao')
+        
+        # Salvar/atualizar endereço
         if usuario.endereco:
             endereco = usuario.endereco
             endereco.cep = cep
@@ -329,63 +331,53 @@ def create_checkout_session(request):
             endereco.save()
         else:
             endereco = Endereco.objects.create(
-                cep=cep,
-                rua=rua,
-                numero=numero,
-                bairro=bairro,
-                cidade=cidade,
-                estado=estado,
-                complemento=complemento
+                cep=cep, rua=rua, numero=numero,
+                bairro=bairro, cidade=cidade,
+                estado=estado, complemento=complemento
             )
             usuario.endereco = endereco
             usuario.save()
         
-        # Buscar carrinho e itens
+        # Buscar itens do carrinho
         carrinho = Carrinho.objects.get(usuario=usuario)
         itens = carrinho.itens.all()
         
         if not itens:
             return JsonResponse({'error': 'Carrinho vazio'}, status=400)
         
-        # Criar line_items para o Stripe
+        # Criar line_items
         line_items = []
         for item in itens:
             preco_centavos = int(float(item.produto.preco_final()) * 100)
             
-            # Preparar product_data
-            product_data = {
-                'name': item.produto.nome,
-            }
+            product_data = {'name': item.produto.nome}
             
-            # APENAS adicionar descrição se ela existir e não for vazia
             if item.produto.descricao and item.produto.descricao.strip():
                 product_data['description'] = item.produto.descricao[:500]
-            
-            # Adicionar imagem se existir
-            if item.produto.imagem:
-                try:
-                    image_url = request.build_absolute_uri(item.produto.imagem.url)
-                    product_data['images'] = [image_url]
-                except:
-                    pass
             
             line_items.append({
                 'price_data': {
                     'currency': 'brl',
-                    'product_data': product_data,  # ← Usar o dict preparado
+                    'product_data': product_data,
                     'unit_amount': preco_centavos,
                 },
                 'quantity': item.quantidade,
             })
         
-        # URLs de retorno
+        # Definir métodos de pagamento baseado na escolha
+        if metodo_pagamento == 'pix':
+            payment_method_types = ['pix']
+        else:
+            payment_method_types = ['card']
+        
+        # URLs
         domain_url = request.build_absolute_uri('/')[:-1]
         success_url = domain_url + '/pagamento/sucesso/?session_id={CHECKOUT_SESSION_ID}'
         cancel_url = domain_url + '/checkout/'
         
-        # Criar Checkout Session
+        # Criar sessão Stripe
         checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
+            payment_method_types=payment_method_types,
             line_items=line_items,
             mode='payment',
             success_url=success_url,
@@ -394,6 +386,7 @@ def create_checkout_session(request):
             customer_email=usuario.email,
             metadata={
                 'usuario_id': usuario.id,
+                'metodo_pagamento': metodo_pagamento,
                 'cep': cep,
                 'rua': rua,
                 'numero': numero,
@@ -409,8 +402,9 @@ def create_checkout_session(request):
     except Usuario.DoesNotExist:
         return JsonResponse({'error': 'Usuário não encontrado'}, status=404)
     except Exception as e:
-        print(f"Erro ao criar checkout session: {str(e)}")
+        print(f"Erro: {str(e)}")
         return JsonResponse({'error': str(e)}, status=400)
+
 
 def payment_success(request):
     """Página de sucesso após pagamento"""
