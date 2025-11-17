@@ -2,10 +2,33 @@
 <header class="main-header">
     <div class="header-content">
         <!-- LOGO -->
-        <a href="{% url 'home' %}" class="logo">
-            <img src="{% static 'img/freepigeon.png' %}" alt="Free Pigeon Logo" class="logo-icon">
-            <span class="logo-text">Free<br>Pigeon</span>
-        </a>
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+
+            <div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <a href="{% url 'home' %}" class="logo">
+        <img src="{% static 'img/freepigeon.png' %}" alt="Free Pigeon Logo" class="logo-icon">
+        <span class="logo-text">Free<br>Pigeon</span>
+    </a>
+
+    <!-- Botão que mostra o formulário -->
+    <button id="btn-cep" class="cep-btn" 
+            style="margin-top: 10px; padding: 6px 16px; cursor: pointer;">
+        Registrar CEP
+    </button>
+
+    <!-- Formulário oculto -->
+    <form id="form-cep"
+          action="{% url 'buscar_cep' %}" 
+          method="POST"
+          style="display:none; margin-top:10px; text-align:center;">
+        {% csrf_token %}
+        <input type="text" name="cep" placeholder="Digite seu CEP" required
+               style="padding: 5px; width: 120px;">
+        <button type="submit" style="padding: 5px 12px;">Enviar</button>
+    </form>
+</div>
+         </div>
+
 
         <!-- BARRA DE PESQUISA -->
         <div class="search-section">
@@ -42,4 +65,17 @@
             </a>
         </nav>
     </div>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const botao = document.getElementById("btn-cep");
+        const formulario = document.getElementById("form-cep");
+
+        botao.addEventListener("click", () => {
+            formulario.style.display = 
+                (formulario.style.display === "none" || formulario.style.display === "") 
+                ? "block" 
+                : "none";
+        });
+    });
+    </script>
 </header>

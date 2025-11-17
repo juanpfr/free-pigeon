@@ -1,0 +1,14 @@
+<h2>Resultado da busca de CEP</h2>
+
+{% if erro %}
+    <p style="color:red;">{{ erro }}</p>
+{% endif %}
+
+{% if endereco %}
+<ul>
+    <li><strong>Logradouro:</strong> {{ endereco.logradouro }}</li>
+    <li><strong>Bairro:</strong> {{ endereco.bairro }}</li>
+    <li><strong>Cidade:</strong> {{ endereco.cidade }}</li>
+    <li><strong>Estado:</strong> {{ endereco.estado }}</li>
+</ul>
+{% endif %}

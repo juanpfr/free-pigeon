@@ -16,3 +16,4 @@ def buscar_cep(cep):
                 "uf": dados.get("uf"),
             }
     return None
+

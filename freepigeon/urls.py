@@ -23,4 +23,5 @@ urlpatterns = [
     # checkout / pedidos
     path('checkout/', views.checkout_view, name='checkout'),
     path('meus-pedidos/', views.meus_pedidos, name='meus_pedidos'),
+    path("cep/", views.busca_cep_view, name="buscar_cep"),
 ]
