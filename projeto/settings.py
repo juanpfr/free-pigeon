@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from decouple import config
 
 load_dotenv()
 
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'freepigeon',
+    'djstripe',
 ]
 
 MIDDLEWARE = [
@@ -144,3 +146,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'    # onde o collectstatic junta tudo (dep
 # Arquivos de mídia (uploads de imagens feitas no admin ou pelo usuário)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Configurações do Stripe
+STRIPE_LIVE_PUBLIC_KEY = config('STRIPE_LIVE_PUBLIC_KEY', default='')
+STRIPE_LIVE_SECRET_KEY = config('STRIPE_LIVE_SECRET_KEY', default='')
+STRIPE_TEST_PUBLIC_KEY = config('STRIPE_TEST_PUBLIC_KEY', default='')
+STRIPE_TEST_SECRET_KEY = config('STRIPE_TEST_SECRET_KEY', default='')
+STRIPE_LIVE_MODE = config('STRIPE_LIVE_MODE', default=False, cast=bool)
+
+# Configurações adicionais do dj-stripe
+DJSTRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = 'id'
