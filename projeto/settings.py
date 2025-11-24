@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from decouple import config
 
 load_dotenv()
 
@@ -44,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'freepigeon',
     'djstripe',
+    'social_django',
 ]
 
 MIDDLEWARE = [
@@ -68,6 +68,10 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+
+                # 🔹 social auth
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -110,8 +114,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    'freepigeon.auth_backends.EmailOrCPFBackend',  # seu backend customizado
-    'django.contrib.auth.backends.ModelBackend',   # backend padrão do Django
+    'freepigeon.auth_backends.EmailOrCPFBackend',   # seu backend customizado
+    'django.contrib.auth.backends.ModelBackend',    # backend padrão do Django
+    'social_core.backends.google.GoogleOAuth2',     # 🔹 login com Google
 ]
 
 # Internationalization
@@ -148,12 +153,34 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Configurações do Stripe
-STRIPE_LIVE_PUBLIC_KEY = config('STRIPE_LIVE_PUBLIC_KEY', default='')
-STRIPE_LIVE_SECRET_KEY = config('STRIPE_LIVE_SECRET_KEY', default='')
-STRIPE_TEST_PUBLIC_KEY = config('STRIPE_TEST_PUBLIC_KEY', default='')
-STRIPE_TEST_SECRET_KEY = config('STRIPE_TEST_SECRET_KEY', default='')
-STRIPE_LIVE_MODE = config('STRIPE_LIVE_MODE', default=False, cast=bool)
+STRIPE_LIVE_PUBLIC_KEY = os.getenv('STRIPE_LIVE_PUBLIC_KEY', default='')
+STRIPE_LIVE_SECRET_KEY = os.getenv('STRIPE_LIVE_SECRET_KEY', default='')
+STRIPE_TEST_PUBLIC_KEY = os.getenv('STRIPE_TEST_PUBLIC_KEY', default='')
+STRIPE_TEST_SECRET_KEY = os.getenv('STRIPE_TEST_SECRET_KEY', default='')
+STRIPE_LIVE_MODE = os.getenv('STRIPE_LIVE_MODE', 'False') == 'True'
 
 # Configurações adicionais do dj-stripe
-DJSTRIPE_WEBHOOK_SECRET = config('STRIPE_WEBHOOK_SECRET', default='')
+DJSTRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', default='')
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = 'id'
+
+# ======================================
+# GOOGLE OAUTH (social_django)
+# ======================================
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.getenv('GOOGLE_OAUTH2_KEY', default='')
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.getenv('GOOGLE_OAUTH2_SECRET', default='')
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
+    'https://www.googleapis.com/auth/userinfo.email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+]
+
+# o namespace que usamos no urls.py: path('oauth/', include('social_django.urls', namespace='social'))
+SOCIAL_AUTH_URL_NAMESPACE = 'social'
+
+# para onde redirecionar depois do login pelo Google
+LOGIN_REDIRECT_URL = 'google_login_redirect'
+
+# opcional, mas bom ter:
+LOGIN_URL = 'login'
+LOGOUT_REDIRECT_URL = 'home'

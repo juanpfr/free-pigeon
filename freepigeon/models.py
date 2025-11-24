@@ -33,8 +33,8 @@ class Loja(models.Model):
 class Usuario(models.Model):
     nome = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    telefone = models.CharField(max_length=20)
-    cpf = models.CharField(max_length=14, unique=True)
+    telefone = models.CharField(max_length=20, blank=True, null=True)  # 🔹 agora opcional
+    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)  # 🔹 agora opcional
     senha = models.CharField(max_length=255)
     loja = models.ForeignKey(Loja, on_delete=models.SET_NULL, null=True, blank=True)
     endereco = models.ForeignKey(Endereco, on_delete=models.SET_NULL, null=True, blank=True)

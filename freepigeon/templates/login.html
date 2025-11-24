@@ -51,6 +51,15 @@
 
                     <button type="submit" class="btn-continue">Entrar</button>
 
+                    <div class="divider">
+                        <span>ou</span>
+                    </div>
+
+                    <a href="{% url 'social:begin' 'google-oauth2' %}" class="google-btn">
+                        <img src="{% static 'img/google-icon.png' %}" alt="Google Logo">
+                        Continuar com Google
+                    </a>
+
                     <p class="signup-text">
                         Ainda não tem conta? <a href="{% url 'cadastro' %}">Cadastre-se</a>
                     </p>

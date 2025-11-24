@@ -10,6 +10,12 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('auth/', views.auth_view, name='auth'),
 
+    # 🔹 login com Google (pós-login / ponte)
+    path('google/login/redirect/', views.google_login_redirect, name='google_login_redirect'),
+
+    # 🔹 URLs do social_django (onde o botão chama 'social:begin')
+    path('oauth/', include('social_django.urls', namespace='social')),
+
     # produtos e categorias
     path('produto/<int:produto_id>/', views.produto_view, name='produto'),
     path('categoria/<int:categoria_id>/', views.categoria_view, name='categoria'),

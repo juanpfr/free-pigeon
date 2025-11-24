@@ -1,8 +1,26 @@
+# ===============================
+# IMPORTS GERAIS
+# ===============================
+import stripe
+from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib import messages
 from django.contrib.auth import logout
-from .models import Usuario, Categoria, Produto, Carrinho, CarrinhoProduto, Pedido, PedidoProduto, Endereco
+from django.db import IntegrityError
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+# ===============================
+# MODELOS
+# ===============================
+from .models import (
+    Usuario, Categoria, Produto,
+    Carrinho, CarrinhoProduto,
+    Pedido, PedidoProduto,
+    Endereco
+)
 
 # ============================================================
 # USUÁRIO / LOGIN / LOGOUT / CADASTRO
@@ -67,11 +85,35 @@ def login_view(request):
 
     return render(request, 'login.html', {'veio_do_auth': veio_do_auth})
 
-
 def logout_view(request):
     logout(request)
     return redirect('login')
 
+def google_login_redirect(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
+    email = request.user.email
+    nome = (
+        request.user.get_full_name()
+        or getattr(request.user, 'first_name', '')
+        or (email.split('@')[0] if email else 'Usuário')
+    )
+
+    usuario, created = Usuario.objects.get_or_create(
+        email=email,
+        defaults={
+            'nome': nome,
+            'telefone': None,  # ok, agora pode
+            'cpf': None,       # ok, agora pode ser null
+            'senha': make_password(None),
+        }
+    )
+
+    request.session['usuario_id'] = usuario.id
+    request.session['usuario_nome'] = usuario.nome
+
+    return redirect('home')
 
 def auth_view(request):
     return render(request, 'auth.html')
@@ -240,15 +282,6 @@ def meus_pedidos(request):
         'pedidos': pedidos,
         'usuario_nome': usuario.nome
     })
-
-import stripe
-from django.conf import settings
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.contrib.auth.decorators import login_required
-from .models import Usuario, Carrinho, CarrinhoProduto, Pedido, PedidoProduto, Endereco
 
 # Configurar Stripe
 stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
