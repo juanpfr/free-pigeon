@@ -16,9 +16,9 @@ Acesse:
 
 ## 🚀 Tecnologias
 - **Backend:** Django
-- **Frontend:** HTML5, CSS3
+- **Frontend:** HTML5, CSS3, JavaScript
 - **Banco de Dados:** PostgreSQL
-- **Integrações:** CorreiosAPI, GoogleAuth
+- **Integrações:** CorreiosAPI, GoogleAuth, Stripe
 
 ---
 
@@ -35,11 +35,21 @@ python -m venv venv
 .\venv\Scripts\activate  # (Windows)
 source venv/bin/activate # (Linux/Mac)
 
-# Caso ocorra algum erro no comando acima, tente este comando para liberar ambientes virtuais:
+# Caso ocorra algum erro no comando acima, tente este comando para permitir ambientes virtuais:
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 # Instale as dependências
 pip install -r requirements.txt
+
+# Criar o Banco de dados no PostgreSQL (Se não tiver sido criado)
+        # Dentro do pgAdmin4
+        CREATE DATABASE freepigeon_db;
+
+# Criar migrações no PostgreSQL
+python manage.py makemigrations
+
+# Executar migrações no PostgreSQL
+python manage.py migrate
 
 # Execute o projeto
 python manage.py runserver
