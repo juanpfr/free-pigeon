@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main>
+    <section class="product-section">
+        <h2>Comece a vender no FreePigeon</h2>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items: flex-start;">
+
+            <!-- INFO PRINCIPAL -->
+            <div style="flex: 2; min-width: 280px; display: flex; flex-direction: column; gap: 1.5rem;">
+
+                <div class="product-card" style="border-radius: 20px;">
+                    <h3 style="font-size: 20px; margin-bottom: .6rem;">
+                        {% if usuario.loja %}
+                            Área do vendedor - {{ usuario.loja.nome }}
+                        {% else %}
+                            Área do vendedor
+                        {% endif %}
+                    </h3>
+
+                    <p style="font-size: 14px; color: var(--text-gray); margin-bottom: 1rem;">
+                        Você pode vender com ou sem loja.
+                        {% if usuario.loja %}
+                            Seus anúncios podem ficar vinculados à sua loja
+                            <strong>{{ usuario.loja.nome }}</strong> ou diretamente à sua conta.
+                        {% else %}
+                            Se quiser uma vitrine mais profissional, crie uma loja.
+                            Mas não é obrigatório: você já pode anunciar usando apenas sua conta.
+                        {% endif %}
+                    </p>
+
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: .5rem;">
+                        <!-- Ver anúncios do usuário -->
+                        <a href="{% url 'anuncios' %}" style="
+                            padding: .8rem 1.6rem;
+                            border-radius: 8px;
+                            background-color: var(--primary-blue);
+                            color: var(--bg-white);
+                            font-size: 14px;
+                            font-weight: 500;
+                            ">
+                            Ver meus anúncios
+                        </a>
+
+                        <!-- Cadastrar produto (sem exigir loja) -->
+                        <a href="{% url 'cadastrar_produto' %}" style="
+                            padding: .8rem 1.6rem;
+                            border-radius: 8px;
+                            border: 1px solid var(--border-gray);
+                            font-size: 14px;
+                            ">
+                            Cadastrar novo produto
+                        </a>
+
+                        <!-- Criar loja: opcional -->
+                        {% if not usuario.loja %}
+                            <a href="{% url 'criar_loja' %}" style="
+                                padding: .8rem 1.6rem;
+                                border-radius: 8px;
+                                background-color: var(--primary-green);
+                                font-size: 14px;
+                                font-weight: 500;
+                                ">
+                                Criar minha loja (opcional)
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- PASSO A PASSO -->
+                <div class="product-card" style="border-radius: 20px;">
+                    <h3 style="font-size: 18px; margin-bottom: 1rem;">
+                        Como funciona para vender
+                    </h3>
+
+                    <ol style="font-size: 14px; color: var(--text-gray); padding-left: 1.2rem; display: grid; gap: .7rem;">
+                        <li>
+                            <strong>Cadastre um produto</strong> usando sua conta
+                            {% if usuario.loja %} ou vincule à sua loja.{% else %} (loja é opcional).{% endif %}
+                        </li>
+                        <li>
+                            <strong>Crie anúncios completos</strong> com boas fotos, descrição clara e preço competitivo.
+                        </li>
+                        <li>
+                            <strong>Receba pedidos</strong> e acompanhe o andamento pela aba <em>Resumo</em>.
+                        </li>
+                        <li>
+                            <strong>Envie o produto</strong> para o comprador dentro do prazo combinado.
+                        </li>
+                    </ol>
+                </div>
+
+            </div>
+
+            <!-- CARD LATERAL -->
+            <aside style="flex: 1; min-width: 260px;">
+                <div class="product-card" style="border-radius: 20px;">
+                    <h3 style="font-size: 16px; margin-bottom: 1rem;">
+                        Dicas rápidas para vender mais
+                    </h3>
+                    <ul style="font-size: 14px; color: var(--text-gray); display: grid; gap: .6rem; list-style: none;">
+                        <li>• Use fotos claras e em boa qualidade.</li>
+                        <li>• Descreva o produto com todos os detalhes.</li>
+                        <li>• Mantenha o estoque sempre atualizado.</li>
+                        <li>• Responda rapidamente às dúvidas dos compradores.</li>
+                    </ul>
+                </div>
+            </aside>
+
+        </div>
+    </section>
+</main>
+{% endblock %}

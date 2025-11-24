@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main>
+    <section class="product-section">
+        <h2>Meus anúncios</h2>
+
+        {% if produtos %}
+            <div class="product-grid">
+                {% for produto in produtos %}
+                    <div class="product-card small">
+                        {% if produto.imagem %}
+                            <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x200?text=Sem+imagem" alt="{{ produto.nome }}">
+                        {% endif %}
+
+                        <div class="product-info">
+                            <span style="display: block; font-size: 14px; font-weight: 600; color: var(--text-gray-dark); margin-bottom: .3rem;">
+                                {{ produto.nome }}
+                            </span>
+                            <span style="display: block; font-size: 13px; color: var(--text-gray); margin-bottom: .2rem;">
+                                Estoque: {{ produto.q_estoque }}
+                            </span>
+
+                            {% if produto.desconto %}
+                                <span style="display: block; font-size: 13px; color: var(--text-gray-light); text-decoration: line-through;">
+                                    R$ {{ produto.valor }}
+                                </span>
+                                <span style="display: block; font-size: 15px; font-weight: 600; color: var(--primary-blue);">
+                                    R$ {{ produto.preco_final }}
+                                </span>
+                            {% else %}
+                                <span style="display: block; font-size: 15px; font-weight: 600; color: var(--primary-blue);">
+                                    R$ {{ produto.valor }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div style="margin-top: 1rem; display: flex; gap: .5rem; flex-wrap: wrap;">
+                            <a href="{% url 'produto' produto.id %}" style="
+                                    flex: 1;
+                                    text-align: center;
+                                    padding: .5rem .7rem;
+                                    border-radius: 6px;
+                                    border: 1px solid var(--border-gray);
+                                    font-size: 13px;
+                                    ">
+                                Ver anúncio
+                            </a>
+                            <a href="#" style="
+                                    flex: 1;
+                                    text-align: center;
+                                    padding: .5rem .7rem;
+                                    border-radius: 6px;
+                                    background-color: var(--primary-blue);
+                                    color: var(--bg-white);
+                                    font-size: 13px;
+                                    font-weight: 500;
+                                    ">
+                                Editar
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="product-card" style="border-radius: 20px; text-align: center;">
+                <p style="font-size: 14px; color: var(--text-gray); margin-bottom: 1rem;">
+                    Você ainda não tem anúncios cadastrados.
+                </p>
+                <a href="{% url 'vender' %}" style="
+                    display: inline-block;
+                    padding: .8rem 1.6rem;
+                    border-radius: 8px;
+                    background-color: var(--primary-blue);
+                    color: var(--bg-white);
+                    font-size: 14px;
+                    font-weight: 500;
+                    ">
+                    Começar a vender
+                </a>
+            </div>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

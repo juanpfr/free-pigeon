@@ -10,8 +10,8 @@
         <!-- BARRA DE PESQUISA -->
         <div class="search-section">
             <form method="get" action="{% url 'buscar' %}" class="search-form">
-                <input type="text" name="q" placeholder="Buscar produtos, marcas e muito mais..."
-                       class="search-input" value="{{ request.GET.q }}">
+                <input type="text" name="q" placeholder="Buscar produtos, marcas e muito mais..." class="search-input"
+                    value="{{ request.GET.q }}">
                 <button type="submit" class="search-button" aria-label="Buscar">
                     <img src="{% static 'img/search.png' %}" alt="Procurar" class="icon">
                 </button>
@@ -26,8 +26,21 @@
 
             {% if usuario_nome %}
             <a href="{% url 'meus_pedidos' %}" class="orders-btn" title="Meus Pedidos">Pedidos</a>
-            <span class="user-greeting">Olá, {{ usuario_nome }}!</span>
-            <a href="{% url 'logout' %}" class="logout-btn">Sair</a>
+
+            <details class="user-dropdown">
+                <summary class="user-trigger">
+                    <span class="user-greeting">Olá, {{ usuario_nome }}!</span>
+                    <span class="arrow">▼</span>
+                </summary>
+
+                <ul class="user-menu">
+                    <li><a href="{% url 'perfil' %}">Meu perfil</a></li>
+                    <li><a href="{% url 'vender' %}">Vender</a></li>
+                    <li><a href="{% url 'anuncios' %}">Anúncios</a></li>
+                    <li><a href="{% url 'resumo' %}">Resumo</a></li>
+                    <li><a href="{% url 'logout' %}">Sair</a></li>
+                </ul>
+            </details>
             {% else %}
             <a href="{% url 'login' %}">Entrar</a>
             <a href="{% url 'cadastro' %}">Criar conta</a>

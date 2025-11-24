@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main>
+    <section class="product-section" style="margin-bottom: 2rem;">
+        <h2>Minha conta</h2>
+
+        <div style="display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
+
+            <!-- SIDEBAR DE PERFIL -->
+            <aside style="
+                min-width: 250px;
+                max-width: 280px;
+                background-color: var(--bg-light);
+                border: 1px solid var(--border-gray);
+                border-radius: 20px;
+                padding: 1.5rem;
+                ">
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="font-size: 14px; color: var(--text-gray-light); margin-bottom: .3rem;">
+                        Olá,
+                    </p>
+                    <p style="font-size: 18px; font-weight: 600; color: var(--text-gray-dark);">
+                        {{ usuario.nome|default:usuario_nome }}
+                    </p>
+                    <p style="font-size: 13px; color: var(--text-gray); margin-top: .3rem;">
+                        Conta FreePigeon
+                    </p>
+                </div>
+
+                <nav style="display: flex; flex-direction: column; gap: .25rem; font-size: 14px;">
+                    <a href="{% url 'perfil' %}" style="padding: 8px 10px; border-radius: 8px; background-color: var(--primary-green); font-weight: 500;">
+                        Meu perfil
+                    </a>
+                    <a href="{% url 'anuncios' %}" style="padding: 8px 10px; border-radius: 8px;">
+                        Meus anúncios
+                    </a>
+                    <a href="{% url 'vender' %}" style="padding: 8px 10px; border-radius: 8px;">
+                        Vender
+                    </a>
+                    <a href="{% url 'resumo' %}" style="padding: 8px 10px; border-radius: 8px;">
+                        Resumo de vendas
+                    </a>
+                    <a href="{% url 'meus_pedidos' %}" style="padding: 8px 10px; border-radius: 8px;">
+                        Meus pedidos
+                    </a>
+                    <a href="{% url 'logout' %}" style="padding: 8px 10px; border-radius: 8px; margin-top: .5rem; font-weight: 500;">
+                        Sair
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- CONTEÚDO PRINCIPAL -->
+            <section style="flex: 1; min-width: 260px; display: flex; flex-direction: column; gap: 1.5rem;">
+
+                <!-- DADOS PESSOAIS -->
+                <div class="product-card" style="border-radius: 20px;">
+                    <h3 style="font-size: 18px; margin-bottom: 1rem; color: var(--text-gray-dark);">
+                        Dados pessoais
+                    </h3>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem 2rem; font-size: 14px;">
+                        <div>
+                            <span style="font-size: 12px; color: var(--text-gray-light);">Nome completo</span>
+                            <p style="font-weight: 500; color: var(--text-gray-dark);">
+                                {{ usuario.nome|default:"—" }}
+                            </p>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; color: var(--text-gray-light);">E-mail</span>
+                            <p style="font-weight: 500; color: var(--text-gray-dark);">
+                                {{ usuario.email|default:"—" }}
+                            </p>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; color: var(--text-gray-light);">Telefone</span>
+                            <p style="font-weight: 500; color: var(--text-gray-dark);">
+                                {{ usuario.telefone|default:"Não informado" }}
+                            </p>
+                        </div>
+                        <div>
+                            <span style="font-size: 12px; color: var(--text-gray-light);">CPF</span>
+                            <p style="font-weight: 500; color: var(--text-gray-dark);">
+                                {{ usuario.cpf|default:"Não informado" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button type="button" style="
+                                padding: .7rem 1.4rem;
+                                border-radius: 8px;
+                                background-color: var(--primary-blue);
+                                color: var(--bg-white);
+                                font-size: 14px;
+                                font-weight: 500;
+                                ">
+                            Editar dados
+                        </button>
+                        <button type="button" style="
+                                padding: .7rem 1.4rem;
+                                border-radius: 8px;
+                                border: 1px solid var(--border-gray);
+                                font-size: 14px;
+                                ">
+                            Alterar senha
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ENDEREÇO PRINCIPAL -->
+                <div class="product-card" style="border-radius: 20px;">
+                    <h3 style="font-size: 18px; margin-bottom: 1rem; color: var(--text-gray-dark);">
+                        Endereço principal
+                    </h3>
+
+                    {% if usuario.endereco %}
+                        <p style="font-size: 14px; color: var(--text-gray-dark); margin-bottom: .25rem;">
+                            {{ usuario.endereco.rua }}, {{ usuario.endereco.numero }}
+                            {% if usuario.endereco.complemento %}
+                                - {{ usuario.endereco.complemento }}
+                            {% endif %}
+                        </p>
+                        <p style="font-size: 14px; color: var(--text-gray);">
+                            {{ usuario.endereco.bairro }} - {{ usuario.endereco.cidade }} / {{ usuario.endereco.estado }} <br>
+                            CEP: {{ usuario.endereco.cep }}
+                        </p>
+                    {% else %}
+                        <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .5rem;">
+                            Você ainda não cadastrou um endereço.
+                        </p>
+                    {% endif %}
+
+                    <div style="margin-top: 1.5rem;">
+                        <button type="button" style="
+                                padding: .7rem 1.4rem;
+                                border-radius: 8px;
+                                background-color: var(--primary-blue);
+                                color: var(--bg-white);
+                                font-size: 14px;
+                                font-weight: 500;
+                                ">
+                            {% if usuario.endereco %}Editar endereço{% else %}Adicionar endereço{% endif %}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DADOS DA LOJA -->
+                <div class="product-card" style="border-radius: 20px;">
+                    <h3 style="font-size: 18px; margin-bottom: 1rem; color: var(--text-gray-dark);">
+                        Minha Loja
+                    </h3>
+
+                    {% if usuario.loja %}
+                        <p style="font-size: 14px; color: var(--text-gray-dark); margin-bottom: .25rem;">
+                            Nome da loja:
+                            <strong>{{ usuario.loja.nome }}</strong>
+                        </p>
+                        <p style="font-size: 14px; color: var(--text-gray);">
+                            Essa é a loja vinculada à sua conta. Use a área de
+                            <strong>Vender</strong> para cadastrar novos produtos.
+                        </p>
+                    {% else %}
+                        <p style="font-size: 14px; color: var(--text-gray); margin-bottom: 1rem;">
+                            Você ainda não possui uma loja vinculada.
+                        </p>
+                    {% endif %}
+
+                    <div style="margin-top: 1.5rem;">
+                        <a href="{% url 'vender' %}" style="
+                            display: inline-block;
+                            padding: .7rem 1.4rem;
+                            border-radius: 8px;
+                            background-color: var(--primary-green);
+                            font-size: 14px;
+                            font-weight: 500;
+                            ">
+                            {% if usuario.loja %}Gerenciar vendas{% else %}Quero começar a vender{% endif %}
+                        </a>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </section>
+</main>
+{% endblock %}

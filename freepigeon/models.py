@@ -64,7 +64,19 @@ class Produto(models.Model):
     desconto = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     q_estoque = models.IntegerField()
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
-    loja = models.ForeignKey(Loja, on_delete=models.CASCADE)
+
+    # 🔹 agora é opcional vincular a uma loja
+    loja = models.ForeignKey(Loja, on_delete=models.SET_NULL, null=True, blank=True)
+
+    # 🔹 novo: produto pode ser vinculado diretamente ao usuário vendedor
+    vendedor = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='produtos',
+        null=True,
+        blank=True
+    )
+
     imagem = models.ImageField(upload_to='produtos/', blank=True, null=True)
 
     def __str__(self):
@@ -74,7 +86,6 @@ class Produto(models.Model):
         if self.desconto:
             return self.valor * (1 - self.desconto / 100)
         return self.valor
-
 
 # =========================
 # TABELAS DE ATRIBUTOS DINÂMICOS

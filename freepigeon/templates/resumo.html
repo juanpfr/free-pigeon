@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main>
+    <section class="product-section">
+        <h2>Resumo das vendas</h2>
+
+        <!-- CARDS DE RESUMO -->
+        <div style="
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            ">
+
+            <div class="product-card" style="border-radius: 20px;">
+                <p style="font-size: 13px; color: var(--text-gray-light);">Pedidos</p>
+                <p style="font-size: 22px; font-weight: 600; color: var(--text-gray-dark);">
+                    {{ total_pedidos|default:"0" }}
+                </p>
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
+                    Pedidos recebidos até agora.
+                </p>
+            </div>
+
+            <div class="product-card" style="border-radius: 20px;">
+                <p style="font-size: 13px; color: var(--text-gray-light);">Itens vendidos</p>
+                <p style="font-size: 22px; font-weight: 600; color: var(--text-gray-dark);">
+                    {{ total_itens_vendidos|default:"0" }}
+                </p>
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
+                    Quantidade total de produtos vendidos.
+                </p>
+            </div>
+
+            <div class="product-card" style="border-radius: 20px;">
+                <p style="font-size: 13px; color: var(--text-gray-light);">Faturamento</p>
+                <p style="font-size: 22px; font-weight: 600; color: var(--primary-blue);">
+                    R$ {{ faturamento_total|default:"0,00" }}
+                </p>
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
+                    Valor total em vendas confirmadas.
+                </p>
+            </div>
+        </div>
+
+        <!-- ÚLTIMOS PEDIDOS -->
+        <div class="product-card" style="border-radius: 20px;">
+            <h3 style="font-size: 18px; margin-bottom: 1rem;">
+                Últimos pedidos
+            </h3>
+
+            {% if ultimos_pedidos %}
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-gray);">
+                                <th style="text-align: left; padding: .6rem;">Pedido</th>
+                                <th style="text-align: left; padding: .6rem;">Data</th>
+                                <th style="text-align: left; padding: .6rem;">Itens</th>
+                                <th style="text-align: left; padding: .6rem;">Total</th>
+                                <th style="text-align: left; padding: .6rem;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pedido in ultimos_pedidos %}
+                                <tr style="border-bottom: 1px solid #f0f0f0;">
+                                    <td style="padding: .6rem;">#{{ pedido.id }}</td>
+                                    <td style="padding: .6rem;">{{ pedido.data_efetuado|date:"d/m/Y H:i" }}</td>
+                                    <td style="padding: .6rem;">{{ pedido.itens.count }}</td>
+                                    <td style="padding: .6rem;">R$ {{ pedido.total }}</td>
+                                    <td style="padding: .6rem;">{{ pedido.status }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p style="font-size: 14px; color: var(--text-gray);">
+                    Ainda não há pedidos para exibir no resumo.
+                </p>
+            {% endif %}
+        </div>
+    </section>
+</main>
+{% endblock %}

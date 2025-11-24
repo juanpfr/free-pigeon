@@ -673,3 +673,64 @@ main {
         top: 160px;
     }
 }
+
+/* DROPDOWN DO USUÁRIO */
+.user-dropdown {
+    position: relative;
+}
+
+.user-dropdown summary {
+    list-style: none;              /* remove marcador padrão */
+}
+
+.user-dropdown summary::-webkit-details-marker {
+    display: none;                 /* remove setinha padrão no Chrome */
+}
+
+.user-trigger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--text-dark);
+    cursor: pointer;
+}
+
+.user-trigger .arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+}
+
+/* gira a setinha quando aberto */
+.user-dropdown[open] .arrow {
+    transform: rotate(180deg);
+}
+
+.user-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background-color: var(--bg-white);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    padding: 8px 0;
+    min-width: 170px;
+    z-index: 999;
+}
+
+.user-menu li {
+    padding: 8px 16px;
+}
+
+.user-menu a {
+    display: block;
+    font-size: 14px;
+    color: var(--text-gray-dark);
+    text-decoration: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.user-menu a:hover {
+    background-color: var(--primary-green);
+    color: var(--text-dark);
+}

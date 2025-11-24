@@ -16,6 +16,16 @@ urlpatterns = [
     # 🔹 URLs do social_django (onde o botão chama 'social:begin')
     path('oauth/', include('social_django.urls', namespace='social')),
 
+    # perfil do usuário
+    path('perfil/', views.perfil, name='perfil'),
+    path('vender/', views.vender, name='vender'),
+    path('anuncios/', views.anuncios, name='anuncios'),
+    path('resumo/', views.resumo, name='resumo'),
+    path('loja/criar/', views.criar_loja, name='criar_loja'),
+    path('produto/novo/', views.cadastrar_produto, name='cadastrar_produto'),
+
+
+
     # produtos e categorias
     path('produto/<int:produto_id>/', views.produto_view, name='produto'),
     path('categoria/<int:categoria_id>/', views.categoria_view, name='categoria'),

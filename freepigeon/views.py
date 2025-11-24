@@ -11,12 +11,14 @@ from django.db import IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required
 
 # ===============================
 # MODELOS
 # ===============================
 from .models import (
-    Usuario, Categoria, Produto,
+    Usuario, Loja, Categoria, Produto,
     Carrinho, CarrinhoProduto,
     Pedido, PedidoProduto,
     Endereco
@@ -30,15 +32,17 @@ def cadastrar_usuario(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
         email = request.POST.get('email')
-        telefone = request.POST.get('telefone')
-        cpf = request.POST.get('cpf')
+        telefone = request.POST.get('telefone') or None
+        cpf = request.POST.get('cpf') or None
         senha = request.POST.get('senha')
 
         # Validações
         if Usuario.objects.filter(email=email).exists():
             messages.error(request, 'E-mail já cadastrado!')
             return render(request, 'cadastro.html')
-        if Usuario.objects.filter(cpf=cpf).exists():
+
+        # CPF agora é opcional: só valida se tiver sido preenchido
+        if cpf and Usuario.objects.filter(cpf=cpf).exists():
             messages.error(request, 'CPF já cadastrado!')
             return render(request, 'cadastro.html')
 
@@ -47,7 +51,7 @@ def cadastrar_usuario(request):
             nome=nome,
             email=email,
             telefone=telefone,
-            cpf=cpf,
+            cpf=cpf,  # pode ser None
             senha=make_password(senha)
         )
 
@@ -55,6 +59,7 @@ def cadastrar_usuario(request):
         return redirect('login')
 
     return render(request, 'cadastro.html')
+
 
 def login_view(request):
     previous_url = request.META.get('HTTP_REFERER', '')
@@ -85,9 +90,11 @@ def login_view(request):
 
     return render(request, 'login.html', {'veio_do_auth': veio_do_auth})
 
+
 def logout_view(request):
     logout(request)
     return redirect('login')
+
 
 def google_login_redirect(request):
     if not request.user.is_authenticated:
@@ -104,8 +111,8 @@ def google_login_redirect(request):
         email=email,
         defaults={
             'nome': nome,
-            'telefone': None,  # ok, agora pode
-            'cpf': None,       # ok, agora pode ser null
+            'telefone': None,
+            'cpf': None,
             'senha': make_password(None),
         }
     )
@@ -115,8 +122,154 @@ def google_login_redirect(request):
 
     return redirect('home')
 
+
 def auth_view(request):
     return render(request, 'auth.html')
+
+
+# ============================================================
+# PERFIL / ÁREA DO VENDEDOR
+# ============================================================
+
+@login_required(login_url='login')
+def perfil(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    return render(request, 'perfil.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+    })
+
+
+@login_required(login_url='login')
+def vender(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    return render(request, 'vender.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+    })
+
+
+@login_required(login_url='login')
+def anuncios(request):
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return redirect('login')
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    # produtos do usuário como vendedor
+    filtros = Q(vendedor=usuario)
+
+    # se o usuário tiver loja, também mostra produtos vinculados à loja
+    if usuario.loja:
+        filtros |= Q(loja=usuario.loja)
+
+    produtos = Produto.objects.filter(filtros)
+
+    return render(request, 'anuncios.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+        'produtos': produtos,
+    })
+
+
+@login_required(login_url='login')
+def resumo(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    # Exemplo simples de cálculo – ajuste conforme precisar
+    pedidos = Pedido.objects.filter(usuario=usuario)
+    total_pedidos = pedidos.count()
+
+    total_itens = 0
+    faturamento = 0
+    for pedido in pedidos:
+        for item in pedido.itens.all():
+            total_itens += item.quantidade
+        faturamento += pedido.total()
+
+    ultimos_pedidos = pedidos.order_by('-data_efetuado')[:5]
+
+    return render(request, 'resumo.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+        'total_pedidos': total_pedidos,
+        'total_itens_vendidos': total_itens,
+        'faturamento_total': f"{faturamento:.2f}",
+        'ultimos_pedidos': ultimos_pedidos,
+    })
+
+
+# ====== NOVO: CRIAR LOJA ======
+
+@login_required(login_url='login')
+def criar_loja(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    if request.method == 'POST':
+        nome = (request.POST.get('nome') or '').strip()
+        if not nome:
+            messages.error(request, 'Informe um nome para a loja.')
+        else:
+            loja = Loja.objects.create(nome=nome)
+            usuario.loja = loja
+            usuario.save()
+            messages.success(request, 'Loja criada com sucesso!')
+            return redirect('vender')
+
+    return render(request, 'criar_loja.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+    })
+
+
+# ====== NOVO: CADASTRAR PRODUTO ======
+
+@login_required(login_url='login')
+def cadastrar_produto(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    categorias = Categoria.objects.all()
+
+    if request.method == 'POST':
+        nome = request.POST.get('nome')
+        categoria_id = request.POST.get('categoria')
+        descricao = request.POST.get('descricao')
+        valor = request.POST.get('valor')
+        desconto = request.POST.get('desconto') or None
+        q_estoque = request.POST.get('q_estoque')
+        imagem = request.FILES.get('imagem')
+        vincular_loja = request.POST.get('vincular_loja')
+
+        if not nome or not categoria_id or not valor or not q_estoque:
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+        else:
+            categoria = get_object_or_404(Categoria, id=categoria_id)
+
+            produto = Produto.objects.create(
+                nome=nome,
+                descricao=descricao,
+                valor=valor,
+                desconto=desconto,
+                q_estoque=q_estoque,
+                categoria=categoria,
+                vendedor=usuario,
+                loja=usuario.loja if (usuario.loja and vincular_loja) else None,
+                imagem=imagem
+            )
+
+            messages.success(request, 'Produto cadastrado com sucesso!')
+            return redirect('anuncios')
+
+    return render(request, 'cadastrar_produto.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+        'categorias': categorias,
+    })
 
 
 # ============================================================
@@ -154,6 +307,7 @@ def buscar_produtos(request):
         'produtos': produtos,
         'usuario_nome': usuario_nome
     })
+
 
 def produto_view(request, produto_id):
     produto = get_object_or_404(Produto, id=produto_id)
@@ -213,7 +367,7 @@ def remover_do_carrinho(request, produto_id):
 
 
 # ============================================================
-# CHECKOUT / PEDIDO
+# CHECKOUT / PEDIDO (versão antiga: checkout_view — parece não usada)
 # ============================================================
 
 def checkout_view(request):
@@ -283,16 +437,16 @@ def meus_pedidos(request):
         'usuario_nome': usuario.nome
     })
 
+
 # Configurar Stripe
 stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
 
 #@login_required  # Comentar por enquanto para testar
 def checkout_page(request):
     """Renderiza a página de checkout"""
-    
     usuario_id = request.session.get('usuario_id')
-    usuario_nome = request.session.get('usuario_nome')  # ← ADICIONAR
-    
+    usuario_nome = request.session.get('usuario_nome')
+
     if usuario_id:
         try:
             usuario = Usuario.objects.get(id=usuario_id)
@@ -300,11 +454,11 @@ def checkout_page(request):
             itens = carrinho.itens.all()
             total = carrinho.total()
             endereco = usuario.endereco
-            
+
             print(f"✓ Usuário: {usuario.nome}")
             print(f"✓ Itens no carrinho: {itens.count()}")
             print(f"✓ Total: R$ {total}")
-            
+
         except Usuario.DoesNotExist:
             print("✗ Usuário não encontrado")
             return redirect('login')
@@ -312,18 +466,19 @@ def checkout_page(request):
             print(f"✗ Erro: {e}")
             itens = []
             total = 0
+            endereco = None
     else:
         print("✗ Usuário não está logado")
         return redirect('login')
-    
+
     context = {
         'itens': itens,
         'total': total,
         'endereco': endereco,
         'stripe_public_key': settings.STRIPE_TEST_PUBLIC_KEY,
-        'usuario_nome': usuario_nome,  # ← ADICIONAR AQUI
+        'usuario_nome': usuario_nome,
     }
-    
+
     return render(request, 'checkout.html', context)
 
 
@@ -333,12 +488,12 @@ def create_checkout_session(request):
     """Cria uma Checkout Session no Stripe com suporte a PIX"""
     try:
         usuario_id = request.session.get('usuario_id')
-        
+
         if not usuario_id:
             return JsonResponse({'error': 'Usuário não autenticado'}, status=401)
-        
+
         usuario = Usuario.objects.get(id=usuario_id)
-        
+
         # Pegar dados do endereço
         cep = request.POST.get('cep')
         rua = request.POST.get('rua')
@@ -347,10 +502,10 @@ def create_checkout_session(request):
         cidade = request.POST.get('cidade')
         estado = request.POST.get('estado')
         complemento = request.POST.get('complemento', '')
-        
+
         # Pegar método de pagamento escolhido
         metodo_pagamento = request.POST.get('pagamento', 'cartao')
-        
+
         # Salvar/atualizar endereço
         if usuario.endereco:
             endereco = usuario.endereco
@@ -370,24 +525,24 @@ def create_checkout_session(request):
             )
             usuario.endereco = endereco
             usuario.save()
-        
+
         # Buscar itens do carrinho
         carrinho = Carrinho.objects.get(usuario=usuario)
         itens = carrinho.itens.all()
-        
+
         if not itens:
             return JsonResponse({'error': 'Carrinho vazio'}, status=400)
-        
+
         # Criar line_items
         line_items = []
         for item in itens:
             preco_centavos = int(float(item.produto.preco_final()) * 100)
-            
+
             product_data = {'name': item.produto.nome}
-            
+
             if item.produto.descricao and item.produto.descricao.strip():
                 product_data['description'] = item.produto.descricao[:500]
-            
+
             line_items.append({
                 'price_data': {
                     'currency': 'brl',
@@ -396,18 +551,18 @@ def create_checkout_session(request):
                 },
                 'quantity': item.quantidade,
             })
-        
+
         # Definir métodos de pagamento baseado na escolha
         if metodo_pagamento == 'pix':
             payment_method_types = ['pix']
         else:
             payment_method_types = ['card']
-        
+
         # URLs
         domain_url = request.build_absolute_uri('/')[:-1]
         success_url = domain_url + '/pagamento/sucesso/?session_id={CHECKOUT_SESSION_ID}'
         cancel_url = domain_url + '/checkout/'
-        
+
         # Criar sessão Stripe
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=payment_method_types,
@@ -429,9 +584,9 @@ def create_checkout_session(request):
                 'complemento': complemento,
             },
         )
-        
+
         return JsonResponse({'sessionId': checkout_session.id})
-        
+
     except Usuario.DoesNotExist:
         return JsonResponse({'error': 'Usuário não encontrado'}, status=404)
     except Exception as e:
@@ -442,33 +597,33 @@ def create_checkout_session(request):
 def payment_success(request):
     """Página de sucesso após pagamento"""
     session_id = request.GET.get('session_id')
-    usuario_nome = request.session.get('usuario_nome')  # ← ADICIONAR
-    
+    usuario_nome = request.session.get('usuario_nome')
+
     if session_id:
         try:
             usuario_id = request.session.get('usuario_id')
-            
+
             if not usuario_id:
                 return redirect('login')
-            
+
             usuario = Usuario.objects.get(id=usuario_id)
-            
+
             # Recuperar sessão do Stripe
             session = stripe.checkout.Session.retrieve(session_id)
-            
+
             # Verificar se o pagamento foi concluído
             if session.payment_status == 'paid':
                 # Buscar carrinho
                 carrinho = Carrinho.objects.get(usuario=usuario)
                 itens_carrinho = carrinho.itens.all()
-                
+
                 # Criar pedido
                 pedido = Pedido.objects.create(
                     usuario=usuario,
                     endereco=usuario.endereco,
                     status='Pago'
                 )
-                
+
                 # Adicionar produtos ao pedido
                 for item in itens_carrinho:
                     PedidoProduto.objects.create(
@@ -477,38 +632,38 @@ def payment_success(request):
                         quantidade=item.quantidade,
                         preco_unitario=item.produto.preco_final()
                     )
-                    
+
                     # Atualizar estoque
                     item.produto.q_estoque -= item.quantidade
                     item.produto.save()
-                
+
                 # Limpar carrinho
                 carrinho.itens.all().delete()
-                
+
                 context = {
                     'success': True,
                     'pedido': pedido,
                     'session_id': session_id,
                     'total': session.amount_total / 100,
-                    'usuario_nome': usuario_nome,  # ← ADICIONAR
+                    'usuario_nome': usuario_nome,
                 }
                 return render(request, 'payment_success.html', context)
             else:
                 context = {
                     'success': False,
                     'error': 'Pagamento ainda não foi concluído',
-                    'usuario_nome': usuario_nome,  # ← ADICIONAR
+                    'usuario_nome': usuario_nome,
                 }
                 return render(request, 'payment_success.html', context)
-            
+
         except Exception as e:
             context = {
                 'success': False,
                 'error': str(e),
-                'usuario_nome': usuario_nome,  # ← ADICIONAR
+                'usuario_nome': usuario_nome,
             }
             return render(request, 'payment_success.html', context)
-    
+
     return redirect('home')
 
 
@@ -518,7 +673,7 @@ def stripe_webhook(request):
     """Processa webhooks do Stripe"""
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-    
+
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, settings.DJSTRIPE_WEBHOOK_SECRET
@@ -527,21 +682,21 @@ def stripe_webhook(request):
         return HttpResponse(status=400)
     except stripe.error.SignatureVerificationError:
         return HttpResponse(status=400)
-    
+
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         usuario_id = session.get('metadata', {}).get('usuario_id')
-        
+
         print(f"✓ Checkout concluído para usuário ID {usuario_id}")
         print(f"  Session ID: {session['id']}")
         print(f"  Payment Status: {session['payment_status']}")
-    
+
     elif event['type'] == 'payment_intent.succeeded':
         payment_intent = event['data']['object']
         print(f"✓ Pagamento {payment_intent['id']} bem-sucedido!")
-    
+
     elif event['type'] == 'payment_intent.payment_failed':
         payment_intent = event['data']['object']
         print(f"✗ Pagamento {payment_intent['id']} falhou!")
-    
+
     return HttpResponse(status=200)
