@@ -41,6 +41,8 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 # Instale as dependências
 pip install -r requirements.txt
 
+# Atualizar/Criar .env na raiz do projeto(free-pigeon), com base nas informações e no mesmo local do arquivo: .env.example
+
 # Criar o Banco de dados no PostgreSQL (Se não tiver sido criado)
         # Dentro do pgAdmin4
         CREATE DATABASE freepigeon_db;
