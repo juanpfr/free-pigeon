@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load format_extras %}
+
+{% block content %}
+<main>
+    <section class="product-section" style="max-width: 700px; margin: 0 auto;">
+        <h2>Editar dados da conta</h2>
+
+        <form method="post" class="product-card" style="border-radius: 20px; margin-top: 1rem;">
+            {% csrf_token %}
+            <div style="display:flex; flex-direction:column; gap:1rem; font-size:14px;">
+                <div>
+                    <label>Nome completo</label><br>
+                    <input type="text" name="nome" value="{{ usuario.nome }}"
+                           style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                </div>
+
+                <div>
+                    <label>Telefone</label><br>
+                    <input type="text" name="telefone" id="telefone"
+                        value="{{ usuario.telefone|default_if_none:'' }}"
+                        maxlength="15"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                </div>
+
+                <div>
+                    <label>CPF</label><br>
+                    <input type="text" name="cpf" id="cpf"
+                        value="{{ usuario.cpf|default_if_none:'' }}"
+                        maxlength="14"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                </div>
+            </div>
+
+            <div style="margin-top: 1.5rem; display:flex; gap:1rem;">
+                <button type="submit" style="
+                    padding:.7rem 1.4rem;
+                    border-radius:8px;
+                    background:var(--primary-green);
+                    font-weight:500;">
+                    Salvar
+                </button>
+
+                <a href="{% url 'perfil' %}" style="
+                    padding:.7rem 1.4rem;
+                    border-radius:8px;
+                    border:1px solid var(--border-gray);
+                    text-decoration:none;">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </section>
+</main>
+{% endblock %}

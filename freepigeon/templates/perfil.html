@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load format_extras %}
 
 {% block content %}
 <main>
@@ -32,6 +33,9 @@
                 <nav style="display: flex; flex-direction: column; gap: .25rem; font-size: 14px;">
                     <a href="{% url 'perfil' %}" style="padding: 8px 10px; border-radius: 8px; background-color: var(--primary-green); font-weight: 500;">
                         Meu perfil
+                    </a>
+                    <a href="{% url 'enderecos' %}" style="padding: 8px 10px; border-radius: 8px;">
+                        Meus endereços
                     </a>
                     <a href="{% url 'anuncios' %}" style="padding: 8px 10px; border-radius: 8px;">
                         Meus anúncios
@@ -76,73 +80,102 @@
                         <div>
                             <span style="font-size: 12px; color: var(--text-gray-light);">Telefone</span>
                             <p style="font-weight: 500; color: var(--text-gray-dark);">
-                                {{ usuario.telefone|default:"Não informado" }}
+                                {{ usuario.telefone|phone_br|default:"Não informado" }}
                             </p>
                         </div>
                         <div>
                             <span style="font-size: 12px; color: var(--text-gray-light);">CPF</span>
                             <p style="font-weight: 500; color: var(--text-gray-dark);">
-                                {{ usuario.cpf|default:"Não informado" }}
+                                {{ usuario.cpf|cpf_format|default:"Não informado" }}
                             </p>
                         </div>
                     </div>
 
                     <div style="margin-top: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                        <button type="button" style="
+                        <a href="{% url 'editar_perfil' %}" style="
                                 padding: .7rem 1.4rem;
                                 border-radius: 8px;
                                 background-color: var(--primary-blue);
                                 color: var(--bg-white);
                                 font-size: 14px;
                                 font-weight: 500;
+                                text-decoration: none;
                                 ">
                             Editar dados
-                        </button>
-                        <button type="button" style="
+                        </a>
+                        <a href="{% url 'alterar_senha' %}" style="
                                 padding: .7rem 1.4rem;
                                 border-radius: 8px;
                                 border: 1px solid var(--border-gray);
                                 font-size: 14px;
+                                text-decoration: none;
                                 ">
                             Alterar senha
-                        </button>
+                        </a>
                     </div>
                 </div>
 
-                <!-- ENDEREÇO PRINCIPAL -->
+                <!-- ENDEREÇOS -->
                 <div class="product-card" style="border-radius: 20px;">
-                    <h3 style="font-size: 18px; margin-bottom: 1rem; color: var(--text-gray-dark);">
-                        Endereço principal
-                    </h3>
+                    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="font-size: 18px; color: var(--text-gray-dark);">
+                            Meus endereços
+                        </h3>
+                        <a href="{% url 'enderecos' %}" style="font-size: 13px; text-decoration: underline;">
+                            Gerenciar
+                        </a>
+                    </div>
 
-                    {% if usuario.endereco %}
-                        <p style="font-size: 14px; color: var(--text-gray-dark); margin-bottom: .25rem;">
-                            {{ usuario.endereco.rua }}, {{ usuario.endereco.numero }}
-                            {% if usuario.endereco.complemento %}
-                                - {{ usuario.endereco.complemento }}
-                            {% endif %}
-                        </p>
-                        <p style="font-size: 14px; color: var(--text-gray);">
-                            {{ usuario.endereco.bairro }} - {{ usuario.endereco.cidade }} / {{ usuario.endereco.estado }} <br>
-                            CEP: {{ usuario.endereco.cep }}
-                        </p>
+                    {% if enderecos %}
+                        <div style="display: flex; flex-direction: column; gap: .75rem; font-size: 14px;">
+                            {% for endereco in enderecos %}
+                                <div style="padding: .75rem 1rem; border-radius: 12px; border: 1px solid var(--border-gray);">
+                                    <div style="display:flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            {% if endereco.apelido %}
+                                                <strong>{{ endereco.apelido }}</strong>
+                                            {% else %}
+                                                <strong>Endereço {{ forloop.counter }}</strong>
+                                            {% endif %}
+                                            {% if endereco.principal %}
+                                                <span style="font-size: 11px; padding: 2px 6px; border-radius: 999px; background: var(--primary-green); margin-left: .5rem;">
+                                                    Principal
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <p style="margin-top: .25rem;">
+                                        {{ endereco.rua }}, {{ endereco.numero }}
+                                        {% if endereco.complemento %}
+                                            - {{ endereco.complemento }}
+                                        {% endif %}
+                                    </p>
+                                    <p style="color: var(--text-gray);">
+                                        {{ endereco.bairro }} - {{ endereco.cidade }} / {{ endereco.estado }}<br>
+                                        CEP: {{ endereco.cep }}
+                                    </p>
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
                         <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .5rem;">
-                            Você ainda não cadastrou um endereço.
+                            Você ainda não cadastrou nenhum endereço.
                         </p>
                     {% endif %}
 
                     <div style="margin-top: 1.5rem;">
-                        <button type="button" style="
+                        <a href="{% url 'enderecos' %}" style="
+                                display:inline-block;
                                 padding: .7rem 1.4rem;
                                 border-radius: 8px;
                                 background-color: var(--primary-blue);
                                 color: var(--bg-white);
                                 font-size: 14px;
                                 font-weight: 500;
+                                text-decoration:none;
                                 ">
-                            {% if usuario.endereco %}Editar endereço{% else %}Adicionar endereço{% endif %}
-                        </button>
+                            Adicionar/editar endereços
+                        </a>
                     </div>
                 </div>
 
@@ -157,17 +190,23 @@
                             Nome da loja:
                             <strong>{{ usuario.loja.nome }}</strong>
                         </p>
+                        <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .5rem;">
+                            Produtos na loja: <strong>{{ produtos_loja }}</strong><br>
+                            Produtos vendidos por você (sem loja): <strong>{{ produtos_pessoais }}</strong>
+                        </p>
                         <p style="font-size: 14px; color: var(--text-gray);">
-                            Essa é a loja vinculada à sua conta. Use a área de
-                            <strong>Vender</strong> para cadastrar novos produtos.
+                            Você pode anunciar tanto pela loja quanto como pessoa física.
+                            Use a área <strong>Vender</strong> para cadastrar novos produtos
+                            e escolha se quer vincular à sua loja ou anunciar como item usado.
                         </p>
                     {% else %}
                         <p style="font-size: 14px; color: var(--text-gray); margin-bottom: 1rem;">
-                            Você ainda não possui uma loja vinculada.
+                            Você ainda não possui uma loja vinculada. Mesmo assim, você já pode vender
+                            como pessoa física, anunciando seus próprios itens usados.
                         </p>
                     {% endif %}
 
-                    <div style="margin-top: 1.5rem;">
+                    <div style="margin-top: 1.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
                         <a href="{% url 'vender' %}" style="
                             display: inline-block;
                             padding: .7rem 1.4rem;
@@ -175,9 +214,23 @@
                             background-color: var(--primary-green);
                             font-size: 14px;
                             font-weight: 500;
+                            text-decoration:none;
                             ">
                             {% if usuario.loja %}Gerenciar vendas{% else %}Quero começar a vender{% endif %}
                         </a>
+
+                        {% if not usuario.loja %}
+                            <a href="{% url 'criar_loja' %}" style="
+                                display: inline-block;
+                                padding: .7rem 1.4rem;
+                                border-radius: 8px;
+                                border: 1px solid var(--border-gray);
+                                font-size: 14px;
+                                text-decoration:none;
+                                ">
+                                Criar minha loja
+                            </a>
+                        {% endif %}
                     </div>
                 </div>
 

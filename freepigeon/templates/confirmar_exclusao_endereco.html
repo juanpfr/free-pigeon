@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main>
+    <section class="product-section" style="max-width: 700px; margin: 0 auto;">
+        <h2>Remover endereço</h2>
+
+        <div class="product-card" style="border-radius:20px; margin-top:1rem;">
+            <p style="font-size:14px; margin-bottom:1rem;">
+                Tem certeza que deseja remover este endereço?
+            </p>
+
+            <p style="font-size:14px; color:var(--text-gray); margin-bottom:1rem;">
+                {% if endereco.apelido %}
+                    <strong>{{ endereco.apelido }}</strong><br>
+                {% endif %}
+                {{ endereco.rua }}, {{ endereco.numero }}
+                {% if endereco.complemento %}- {{ endereco.complemento }}{% endif %}<br>
+                {{ endereco.bairro }} - {{ endereco.cidade }} / {{ endereco.estado }}<br>
+                CEP: {{ endereco.cep }}
+            </p>
+
+            <form method="post" style="margin-top:1rem; display:flex; gap:1rem;">
+                {% csrf_token %}
+                <button type="submit" style="
+                    padding:.7rem 1.4rem;
+                    border-radius:8px;
+                    background:#d9534f;
+                    color:#fff;
+                    font-weight:500;
+                    ">
+                    Sim, remover
+                </button>
+                <a href="{% url 'enderecos' %}" style="
+                    padding:.7rem 1.4rem;
+                    border-radius:8px;
+                    border:1px solid var(--border-gray);
+                    text-decoration:none;
+                    ">
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

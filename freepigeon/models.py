@@ -1,22 +1,5 @@
 from django.db import models
 
-
-# =========================
-# TABELA: Endereco
-# =========================
-class Endereco(models.Model):
-    complemento = models.CharField(max_length=255, blank=True, null=True)
-    rua = models.CharField(max_length=255)
-    numero = models.IntegerField()
-    bairro = models.CharField(max_length=255)
-    cidade = models.CharField(max_length=255)
-    estado = models.CharField(max_length=255)
-    cep = models.CharField(max_length=10)
-
-    def __str__(self):
-        return f"{self.rua}, {self.numero} - {self.cidade}"
-
-
 # =========================
 # TABELA: Loja
 # =========================
@@ -33,14 +16,43 @@ class Loja(models.Model):
 class Usuario(models.Model):
     nome = models.CharField(max_length=255)
     email = models.EmailField(unique=True)
-    telefone = models.CharField(max_length=20, blank=True, null=True)  # 🔹 agora opcional
-    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)  # 🔹 agora opcional
+    telefone = models.CharField(max_length=20, blank=True, null=True)
+    cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
     senha = models.CharField(max_length=255)
-    loja = models.ForeignKey(Loja, on_delete=models.SET_NULL, null=True, blank=True)
-    endereco = models.ForeignKey(Endereco, on_delete=models.SET_NULL, null=True, blank=True)
+    loja = models.ForeignKey('Loja', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.nome
+
+
+# =========================
+# TABELA: Endereco
+# =========================
+class Endereco(models.Model):
+    usuario = models.ForeignKey(
+        'Usuario',
+        on_delete=models.CASCADE,
+        related_name='enderecos',
+        null=True,
+        blank=True
+    )
+    apelido = models.CharField(
+        max_length=30, blank=True, null=True
+    )  # Casa, Trabalho, etc.
+    complemento = models.CharField(max_length=255, blank=True, null=True)
+    rua = models.CharField(max_length=255)
+    numero = models.IntegerField()
+    bairro = models.CharField(max_length=255)
+    cidade = models.CharField(max_length=255)
+    estado = models.CharField(max_length=255)
+    cep = models.CharField(max_length=10)
+    principal = models.BooleanField(default=False)
+
+    def __str__(self):
+        base = f"{self.rua}, {self.numero} - {self.cidade}"
+        if self.apelido:
+            return f"{self.apelido} ({base})"
+        return base
 
 
 # =========================

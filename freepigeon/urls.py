@@ -18,13 +18,19 @@ urlpatterns = [
 
     # perfil do usuário
     path('perfil/', views.perfil, name='perfil'),
+    path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
+    path('perfil/alterar-senha/', views.alterar_senha, name='alterar_senha'),
+
+    path('perfil/enderecos/', views.enderecos, name='enderecos'),
+    path('perfil/enderecos/<int:endereco_id>/editar/', views.editar_endereco, name='editar_endereco'),
+    path('perfil/enderecos/<int:endereco_id>/excluir/', views.excluir_endereco, name='excluir_endereco'),
+    path('perfil/enderecos/<int:endereco_id>/principal/', views.definir_endereco_principal, name='definir_endereco_principal'),
+
     path('vender/', views.vender, name='vender'),
     path('anuncios/', views.anuncios, name='anuncios'),
     path('resumo/', views.resumo, name='resumo'),
     path('loja/criar/', views.criar_loja, name='criar_loja'),
     path('produto/novo/', views.cadastrar_produto, name='cadastrar_produto'),
-
-
 
     # produtos e categorias
     path('produto/<int:produto_id>/', views.produto_view, name='produto'),

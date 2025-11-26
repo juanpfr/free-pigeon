@@ -2,6 +2,7 @@
 # IMPORTS GERAIS
 # ===============================
 import stripe
+import re
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password, check_password
@@ -28,12 +29,24 @@ from .models import (
 # USUÁRIO / LOGIN / LOGOUT / CADASTRO
 # ============================================================
 
+
+def so_digitos(valor):
+    """
+    Remove tudo que não for número.
+    Ex: '123.456.789-10' -> '12345678910'
+        '(11) 91234-5678' -> '11912345678'
+        None -> ''
+    """
+    if not valor:
+        return ''
+    return re.sub(r'\D', '', str(valor))
+
 def cadastrar_usuario(request):
     if request.method == 'POST':
         nome = request.POST.get('nome')
         email = request.POST.get('email')
-        telefone = request.POST.get('telefone') or None
-        cpf = request.POST.get('cpf') or None
+        telefone = so_digitos(request.POST.get('telefone')) or None
+        cpf = so_digitos(request.POST.get('cpf')) or None
         senha = request.POST.get('senha')
 
         # Validações
@@ -135,10 +148,200 @@ def auth_view(request):
 def perfil(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    # produtos que ele vende como pessoa física (sem loja)
+    produtos_pessoais = Produto.objects.filter(vendedor=usuario, loja__isnull=True).count()
+
+    # produtos vinculados à loja (se tiver loja)
+    produtos_loja = 0
+    if usuario.loja:
+        produtos_loja = Produto.objects.filter(loja=usuario.loja).count()
+
+    enderecos = usuario.enderecos.all().order_by('-principal', 'id')
+
     return render(request, 'perfil.html', {
         'usuario': usuario,
         'usuario_nome': usuario.nome,
+        'produtos_pessoais': produtos_pessoais,
+        'produtos_loja': produtos_loja,
+        'enderecos': enderecos,
     })
+
+
+@login_required(login_url='login')
+def editar_perfil(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    if request.method == 'POST':
+        nome = (request.POST.get('nome') or '').strip()
+        telefone = so_digitos(request.POST.get('telefone'))
+        cpf = so_digitos(request.POST.get('cpf'))
+
+        if not nome:
+            messages.error(request, 'O nome é obrigatório.')
+        else:
+            usuario.nome = nome
+            usuario.telefone = telefone or None  # evita string vazia no banco
+            usuario.cpf = cpf or None
+            usuario.save()
+
+            messages.success(request, 'Dados atualizados com sucesso!')
+            return redirect('perfil')
+
+    return render(request, 'editar_perfil.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+    })
+
+
+@login_required(login_url='login')
+def alterar_senha(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    if request.method == 'POST':
+        senha_atual = request.POST.get('senha_atual') or ''
+        nova_senha = request.POST.get('nova_senha') or ''
+        nova_senha2 = request.POST.get('nova_senha2') or ''
+
+        # SE estiver usando hash:
+        # if not check_password(senha_atual, usuario.senha):
+
+        if senha_atual != usuario.senha:
+            messages.error(request, 'Senha atual incorreta.')
+        elif not nova_senha:
+            messages.error(request, 'Informe a nova senha.')
+        elif nova_senha != nova_senha2:
+            messages.error(request, 'A confirmação da nova senha não confere.')
+        else:
+            # Se usar hash:
+            # usuario.senha = make_password(nova_senha)
+            usuario.senha = nova_senha
+            usuario.save()
+            messages.success(request, 'Senha alterada com sucesso!')
+            return redirect('perfil')
+
+    return render(request, 'alterar_senha.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+    })
+
+@login_required(login_url='login')
+def enderecos(request):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    if request.method == 'POST':
+        apelido = (request.POST.get('apelido') or '').strip()
+        rua = (request.POST.get('rua') or '').strip()
+        numero = request.POST.get('numero')
+        bairro = (request.POST.get('bairro') or '').strip()
+        cidade = (request.POST.get('cidade') or '').strip()
+        estado = (request.POST.get('estado') or '').strip()
+        cep = (request.POST.get('cep') or '').strip()
+        complemento = (request.POST.get('complemento') or '').strip()
+        principal = bool(request.POST.get('principal'))
+
+        if not (rua and numero and bairro and cidade and estado and cep):
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+        else:
+            if principal:
+                usuario.enderecos.update(principal=False)
+
+            Endereco.objects.create(
+                usuario=usuario,
+                apelido=apelido or None,
+                rua=rua,
+                numero=numero,
+                bairro=bairro,
+                cidade=cidade,
+                estado=estado,
+                cep=cep,
+                complemento=complemento or None,
+                principal=principal,
+            )
+            messages.success(request, 'Endereço cadastrado com sucesso!')
+            return redirect('enderecos')
+
+    enderecos = usuario.enderecos.all().order_by('-principal', 'id')
+    return render(request, 'enderecos.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+        'enderecos': enderecos,
+    })
+
+@login_required(login_url='login')
+def editar_endereco(request, endereco_id):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    endereco = get_object_or_404(Endereco, id=endereco_id, usuario=usuario)
+
+    if request.method == 'POST':
+        apelido = (request.POST.get('apelido') or '').strip()
+        rua = (request.POST.get('rua') or '').strip()
+        numero = request.POST.get('numero')
+        bairro = (request.POST.get('bairro') or '').strip()
+        cidade = (request.POST.get('cidade') or '').strip()
+        estado = (request.POST.get('estado') or '').strip()
+        cep = (request.POST.get('cep') or '').strip()
+        complemento = (request.POST.get('complemento') or '').strip()
+        principal = bool(request.POST.get('principal'))
+
+        if not (rua and numero and bairro and cidade and estado and cep):
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+        else:
+            if principal:
+                usuario.enderecos.update(principal=False)
+
+            endereco.apelido = apelido or None
+            endereco.rua = rua
+            endereco.numero = numero
+            endereco.bairro = bairro
+            endereco.cidade = cidade
+            endereco.estado = estado
+            endereco.cep = cep
+            endereco.complemento = complemento or None
+            endereco.principal = principal
+            endereco.save()
+
+            messages.success(request, 'Endereço atualizado com sucesso!')
+            return redirect('enderecos')
+
+    return render(request, 'editar_endereco.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+        'endereco': endereco,
+    })
+
+@login_required(login_url='login')
+def excluir_endereco(request, endereco_id):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    endereco = get_object_or_404(Endereco, id=endereco_id, usuario=usuario)
+
+    if request.method == 'POST':
+        endereco.delete()
+        messages.success(request, 'Endereço removido com sucesso!')
+        return redirect('enderecos')
+
+    return render(request, 'confirmar_exclusao_endereco.html', {
+        'usuario': usuario,
+        'usuario_nome': usuario.nome,
+        'endereco': endereco,
+    })
+
+@login_required(login_url='login')
+def definir_endereco_principal(request, endereco_id):
+    usuario_id = request.session.get('usuario_id')
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    endereco = get_object_or_404(Endereco, id=endereco_id, usuario=usuario)
+
+    usuario.enderecos.update(principal=False)
+    endereco.principal = True
+    endereco.save()
+    messages.success(request, 'Endereço definido como principal.')
+    return redirect('enderecos')
 
 
 @login_required(login_url='login')

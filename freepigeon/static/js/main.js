@@ -69,3 +69,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+function somenteNumeros(str) {
+        return (str || '').replace(/\D/g, '');
+    }
+
+    function mascaraCPF(value) {
+        let v = somenteNumeros(value).slice(0, 11);
+        if (v.length <= 3) return v;
+        if (v.length <= 6) return v.replace(/(\d{3})(\d+)/, '$1.$2');
+        if (v.length <= 9) return v.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+        return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    }
+
+    function mascaraTelefone(value) {
+        let v = somenteNumeros(value).slice(0, 11);
+
+        if (v.length <= 2) {
+            return '(' + v;
+        }
+        if (v.length <= 6) {
+            return v.replace(/(\d{2})(\d+)/, '($1) $2');
+        }
+        if (v.length <= 10) {
+            // Fixo: (11) 1234-5678
+            return v.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+        }
+        // Celular: (11) 91234-5678
+        return v.replace(/(\d{2})(\d{5})(\d+)/, '($1) $2-$3');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const cpfInput = document.getElementById('cpf');
+        const telInput = document.getElementById('telefone');
+
+        if (cpfInput) {
+            // aplica máscara inicial
+            cpfInput.value = mascaraCPF(cpfInput.value);
+
+            cpfInput.addEventListener('input', function(e) {
+                const cursorPos = this.selectionStart;
+                const oldLength = this.value.length;
+
+                this.value = mascaraCPF(this.value);
+
+                const newLength = this.value.length;
+                this.selectionStart = this.selectionEnd = cursorPos + (newLength - oldLength);
+            });
+        }
+
+        if (telInput) {
+            telInput.value = mascaraTelefone(telInput.value);
+
+            telInput.addEventListener('input', function(e) {
+                const cursorPos = this.selectionStart;
+                const oldLength = this.value.length;
+
+                this.value = mascaraTelefone(this.value);
+
+                const newLength = this.value.length;
+                this.selectionStart = this.selectionEnd = cursorPos + (newLength - oldLength);
+            });
+        }
+    });
