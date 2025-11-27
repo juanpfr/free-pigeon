@@ -586,35 +586,29 @@ def checkout_view(request):
     itens = CarrinhoProduto.objects.filter(carrinho=carrinho)
     total = sum(item.subtotal() for item in itens)
 
-    if request.method == 'POST':
-        endereco_id = request.POST.get('endereco_id')
-        endereco = Endereco.objects.filter(id=endereco_id).first() if endereco_id else None
+    # PEGAR ENDEREÇOS DO USUÁRIO
+    enderecos_qs = Endereco.objects.filter(usuario=usuario)
 
-        pedido = Pedido.objects.create(
-            usuario=usuario,
-            endereco=endereco,
-            status='Pendente'
-        )
+    endereco_principal = (
+        enderecos_qs.filter(principal=True).first()
+        or enderecos_qs.first()
+    )
 
-        for item in itens:
-            PedidoProduto.objects.create(
-                pedido=pedido,
-                produto=item.produto,
-                quantidade=item.quantidade,
-                preco_unitario=item.produto.preco_final()
-            )
+    # ESCOLHER CHAVE PÚBLICA DO STRIPE (TESTE x PRODUÇÃO)
+    if settings.STRIPE_LIVE_MODE:
+        stripe_public_key = settings.STRIPE_LIVE_PUBLIC_KEY
+    else:
+        stripe_public_key = settings.STRIPE_TEST_PUBLIC_KEY
 
-        carrinho.delete()  # limpa o carrinho
-
-        return redirect('meus_pedidos')
-
-    enderecos = Endereco.objects.filter(usuario=usuario.id) if hasattr(Endereco, 'usuario') else [usuario.endereco] if usuario.endereco else []
     return render(request, 'checkout.html', {
         'itens': itens,
         'total': total,
-        'enderecos': enderecos,
-        'usuario_nome': usuario.nome
+        'enderecos': enderecos_qs,
+        'endereco': endereco_principal,      # usado nos value="{{ endereco.* }}"
+        'usuario_nome': usuario.nome,
+        'stripe_public_key': stripe_public_key,  # usado no JS
     })
+
 
 
 # ============================================================
@@ -656,7 +650,11 @@ def checkout_page(request):
             carrinho, created = Carrinho.objects.get_or_create(usuario=usuario)
             itens = carrinho.itens.all()
             total = carrinho.total()
-            endereco = usuario.endereco
+            endereco = (
+                usuario.enderecos.filter(principal=True).first()
+                or usuario.enderecos.first()
+            )
+
 
             print(f"✓ Usuário: {usuario.nome}")
             print(f"✓ Itens no carrinho: {itens.count()}")
@@ -688,7 +686,7 @@ def checkout_page(request):
 #@login_required
 @require_POST
 def create_checkout_session(request):
-    """Cria uma Checkout Session no Stripe com suporte a PIX"""
+    """Cria uma Checkout Session no Stripe com suporte a PIX e endereços do usuário."""
     try:
         usuario_id = request.session.get('usuario_id')
 
@@ -697,7 +695,7 @@ def create_checkout_session(request):
 
         usuario = Usuario.objects.get(id=usuario_id)
 
-        # Pegar dados do endereço
+        # Pegar dados do formulário
         cep = request.POST.get('cep')
         rua = request.POST.get('rua')
         numero = request.POST.get('numero')
@@ -705,29 +703,45 @@ def create_checkout_session(request):
         cidade = request.POST.get('cidade')
         estado = request.POST.get('estado')
         complemento = request.POST.get('complemento', '')
-
-        # Pegar método de pagamento escolhido
         metodo_pagamento = request.POST.get('pagamento', 'cartao')
+        endereco_id = request.POST.get('endereco_id')  # pode vir vazio ou ser um ID
 
-        # Salvar/atualizar endereço
-        if usuario.endereco:
-            endereco = usuario.endereco
-            endereco.cep = cep
-            endereco.rua = rua
-            endereco.numero = numero
-            endereco.bairro = bairro
-            endereco.cidade = cidade
-            endereco.estado = estado
-            endereco.complemento = complemento
-            endereco.save()
+        # Converter número para int de forma segura
+        try:
+            numero_int = int(numero) if numero else 0
+        except (TypeError, ValueError):
+            numero_int = 0
+
+        # Descobrir/atualizar endereço escolhido
+        endereco = None
+
+        if endereco_id:
+            # Usuário escolheu um endereço salvo
+            endereco = Endereco.objects.filter(id=endereco_id, usuario=usuario).first()
+            if endereco:
+                # Se quiser, pode atualizar com o que veio do form
+                endereco.cep = cep
+                endereco.rua = rua
+                endereco.numero = numero_int
+                endereco.bairro = bairro
+                endereco.cidade = cidade
+                endereco.estado = estado
+                endereco.complemento = complemento or None
+                endereco.save()
         else:
+            # Nenhum endereço escolhido – criar um novo (não necessariamente principal)
             endereco = Endereco.objects.create(
-                cep=cep, rua=rua, numero=numero,
-                bairro=bairro, cidade=cidade,
-                estado=estado, complemento=complemento
+                usuario=usuario,
+                apelido=None,
+                cep=cep,
+                rua=rua,
+                numero=numero_int,
+                bairro=bairro,
+                cidade=cidade,
+                estado=estado,
+                complemento=complemento or None,
+                principal=False if usuario.enderecos.exists() else True,  # se for o primeiro, já marca principal
             )
-            usuario.endereco = endereco
-            usuario.save()
 
         # Buscar itens do carrinho
         carrinho = Carrinho.objects.get(usuario=usuario)
@@ -742,7 +756,6 @@ def create_checkout_session(request):
             preco_centavos = int(float(item.produto.preco_final()) * 100)
 
             product_data = {'name': item.produto.nome}
-
             if item.produto.descricao and item.produto.descricao.strip():
                 product_data['description'] = item.produto.descricao[:500]
 
@@ -756,10 +769,7 @@ def create_checkout_session(request):
             })
 
         # Definir métodos de pagamento baseado na escolha
-        if metodo_pagamento == 'pix':
-            payment_method_types = ['pix']
-        else:
-            payment_method_types = ['card']
+        payment_method_types = ['pix'] if metodo_pagamento == 'pix' else ['card']
 
         # URLs
         domain_url = request.build_absolute_uri('/')[:-1]
@@ -785,6 +795,7 @@ def create_checkout_session(request):
                 'cidade': cidade,
                 'estado': estado,
                 'complemento': complemento,
+                'endereco_id': str(endereco.id) if endereco else '',
             },
         )
 
@@ -820,12 +831,33 @@ def payment_success(request):
                 carrinho = Carrinho.objects.get(usuario=usuario)
                 itens_carrinho = carrinho.itens.all()
 
-                # Criar pedido
-                pedido = Pedido.objects.create(
-                    usuario=usuario,
-                    endereco=usuario.endereco,
-                    status='Pago'
-                )
+                # Verificar se o pagamento foi concluído
+                if session.payment_status == 'paid':
+                    # Descobrir endereço usado no checkout
+                    meta = session.get('metadata', {}) or {}
+                    endereco_id = meta.get('endereco_id')
+
+                    endereco = None
+                    if endereco_id:
+                        endereco = Endereco.objects.filter(id=endereco_id, usuario=usuario).first()
+                    if not endereco:
+                        # fallback: principal ou primeiro endereço do usuário
+                        endereco = (
+                            Endereco.objects.filter(usuario=usuario, principal=True).first()
+                            or Endereco.objects.filter(usuario=usuario).first()
+                        )
+
+                    # Buscar carrinho
+                    carrinho = Carrinho.objects.get(usuario=usuario)
+                    itens_carrinho = carrinho.itens.all()
+
+                    # Criar pedido
+                    pedido = Pedido.objects.create(
+                        usuario=usuario,
+                        endereco=endereco,
+                        status='Pago'
+                    )
+
 
                 # Adicionar produtos ao pedido
                 for item in itens_carrinho:

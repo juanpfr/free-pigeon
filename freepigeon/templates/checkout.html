@@ -72,7 +72,7 @@
       border: 2px solid #ddd;
       border-radius: 8px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.2s ease;
     }
 
     .payment-methods label:hover {
@@ -82,6 +82,7 @@
 
     .payment-methods input[type="radio"]:checked + span {
       font-weight: bold;
+      color: #1a1a1a;
     }
 
     .payment-methods label input {
@@ -95,6 +96,98 @@
       padding: 10px;
       background-color: #f0f8ff;
       border-radius: 6px;
+    }
+
+    /* ===== Estilo dos endereços (estilo Mercado Livre) ===== */
+
+    .saved-addresses {
+      margin-bottom: 1.2rem;
+      border-radius: 12px;
+    }
+
+    .saved-addresses h3 {
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .saved-address-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.6rem;
+      padding: 0.75rem 0.9rem;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      background-color: #fff;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      margin-bottom: 0.5rem;
+    }
+
+    .saved-address-item:hover {
+      border-color: #3483fa;
+      box-shadow: 0 0 0 1px rgba(52, 131, 250, 0.15);
+      background-color: #f9fbff;
+    }
+
+    .saved-address-item input[type="radio"] {
+      margin-top: 4px;
+      accent-color: #3483fa;
+    }
+
+    .saved-address-item.selected {
+      border-color: #3483fa;
+      box-shadow: 0 0 0 1px rgba(52, 131, 250, 0.25);
+      background-color: #f4f7ff;
+    }
+
+    .saved-address-label-title {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .saved-address-chip {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #dff5dd;
+      color: #2e7d32;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .saved-address-text {
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .use-new-address {
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+      color: #3483fa;
+      cursor: pointer;
+      text-decoration: underline;
+      border: none;
+      background: none;
+      padding: 0;
+    }
+
+    .use-new-address:hover {
+      color: #2968c8;
+    }
+
+    /* Form de endereço (quando exibido) */
+
+    .address-form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem 1rem;
+      margin-top: 0.75rem;
+    }
+
+    .address-form-grid .form-group {
+      margin-bottom: 0;
     }
   </style>
 </head>
@@ -113,50 +206,110 @@
 
         <section class="address-section">
           <h2>Endereço de Entrega</h2>
-          <form id="checkout-form" class="address-form">
+
+          <form id="checkout-form" class="address-form" method="post">
             {% csrf_token %}
 
-            <div class="form-group">
-              <label for="cep">CEP</label>
-              <input type="text" id="cep" name="cep" placeholder="00000-000"
-                     value="{{ endereco.cep|default:'' }}" required>
-            </div>
+            {# LISTA DE ENDEREÇOS EXISTENTES #}
+            {% if enderecos %}
+              <div class="saved-addresses">
+                <h3>Meus endereços</h3>
 
-            <div class="form-group">
-              <label for="rua">Rua</label>
-              <input type="text" id="rua" name="rua" placeholder="Nome da Rua"
-                     value="{{ endereco.rua|default:'' }}" required>
-            </div>
+                {% for end in enderecos %}
+                  <label class="saved-address-item {% if endereco and end.id == endereco.id %}selected{% endif %}">
+                    <input type="radio"
+                           name="endereco_id"
+                           value="{{ end.id }}"
+                           {% if endereco and end.id == endereco.id %}checked{% endif %}
+                           data-cep="{{ end.cep }}"
+                           data-rua="{{ end.rua }}"
+                           data-numero="{{ end.numero }}"
+                           data-bairro="{{ end.bairro }}"
+                           data-cidade="{{ end.cidade }}"
+                           data-estado="{{ end.estado }}"
+                           data-complemento="{{ end.complemento|default:'' }}">
+                    <span>
+                      <span class="saved-address-label-title">
+                        {% if end.apelido %}
+                          {{ end.apelido }}
+                        {% else %}
+                          Endereço {{ forloop.counter }}
+                        {% endif %}
+                        {% if end.principal %}
+                          <span class="saved-address-chip">Principal</span>
+                        {% endif %}
+                      </span>
+                      <br>
+                      <span class="saved-address-text">
+                        {{ end.rua }}, {{ end.numero }}
+                        {% if end.complemento %}- {{ end.complemento }}{% endif %}<br>
+                        {{ end.bairro }} - {{ end.cidade }}/{{ end.estado }}<br>
+                        CEP {{ end.cep }}
+                      </span>
+                    </span>
+                  </label>
+                {% endfor %}
 
-            <div class="form-group">
-              <label for="numero">Número</label>
-              <input type="text" id="numero" name="numero" placeholder="Nº"
-                     value="{{ endereco.numero|default:'' }}" required>
-            </div>
+                <button type="button" id="btn-use-new-address" class="use-new-address">
+                  Usar novo endereço
+                </button>
 
-            <div class="form-group">
-              <label for="bairro">Bairro</label>
-              <input type="text" id="bairro" name="bairro" placeholder="Bairro"
-                     value="{{ endereco.bairro|default:'' }}" required>
-            </div>
+                {# Radio "virtual" para novo endereço #}
+                <input type="radio"
+                       name="endereco_id"
+                       value=""
+                       id="radio-novo-endereco"
+                       style="display:none;">
+              </div>
+            {% endif %}
 
-            <div class="form-group">
-              <label for="cidade">Cidade</label>
-              <input type="text" id="cidade" name="cidade" placeholder="Cidade"
-                     value="{{ endereco.cidade|default:'' }}" required>
-            </div>
+            {# CAMPOS DO ENDEREÇO (FORM) #}
+            <div id="address-form-fields"
+                 class="address-form-grid"
+                 {% if enderecos %}style="display:none;"{% endif %}>
 
-            <div class="form-group">
-              <label for="estado">Estado</label>
-              <input type="text" id="estado" name="estado" placeholder="UF" maxlength="2"
-                     value="{{ endereco.estado|default:'' }}" required>
-            </div>
+              <div class="form-group">
+                <label for="cep">CEP</label>
+                <input type="text" id="cep" name="cep" placeholder="00000-000"
+                       value="{{ endereco.cep|default:'' }}" required>
+              </div>
 
-            <div class="form-group">
-              <label for="complemento">Complemento</label>
-              <input type="text" id="complemento" name="complemento"
-                     placeholder="Apartamento, bloco, etc."
-                     value="{{ endereco.complemento|default:'' }}">
+              <div class="form-group">
+                <label for="rua">Rua</label>
+                <input type="text" id="rua" name="rua" placeholder="Nome da Rua"
+                       value="{{ endereco.rua|default:'' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="numero">Número</label>
+                <input type="text" id="numero" name="numero" placeholder="Nº"
+                       value="{{ endereco.numero|default:'' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="bairro">Bairro</label>
+                <input type="text" id="bairro" name="bairro" placeholder="Bairro"
+                       value="{{ endereco.bairro|default:'' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="cidade">Cidade</label>
+                <input type="text" id="cidade" name="cidade" placeholder="Cidade"
+                       value="{{ endereco.cidade|default:'' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="estado">Estado</label>
+                <input type="text" id="estado" name="estado" placeholder="UF" maxlength="2"
+                       value="{{ endereco.estado|default:'' }}" required>
+              </div>
+
+              <div class="form-group">
+                <label for="complemento">Complemento</label>
+                <input type="text" id="complemento" name="complemento"
+                       placeholder="Apartamento, bloco, etc."
+                       value="{{ endereco.complemento|default:'' }}">
+              </div>
             </div>
 
             <h2>Método de Pagamento</h2>
@@ -308,29 +461,132 @@
       }
     });
 
-    // Buscar CEP
+    // ===== CEP + VIA CEP =====
     const cepInput = document.getElementById('cep');
-    if (cepInput) {
-      cepInput.addEventListener('blur', async function() {
-        const cep = this.value.replace(/\D/g, '');
-        
-        if (cep.length === 8) {
-          try {
-            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
-            const data = await response.json();
-            
-            if (!data.erro) {
-              document.getElementById('rua').value = data.logradouro || '';
-              document.getElementById('bairro').value = data.bairro || '';
-              document.getElementById('cidade').value = data.localidade || '';
-              document.getElementById('estado').value = data.uf || '';
-              document.getElementById('numero').focus();
-            }
-          } catch (error) {
-            console.error('Erro ao buscar CEP:', error);
+    const ruaInput = document.getElementById('rua');
+    const numeroInput = document.getElementById('numero');
+    const bairroInput = document.getElementById('bairro');
+    const cidadeInput = document.getElementById('cidade');
+    const estadoInput = document.getElementById('estado');
+    const complementoInput = document.getElementById('complemento');
+    const addressFormFields = document.getElementById('address-form-fields');
+
+    async function preencherEnderecoPorCEP(cepValor) {
+      const cep = (cepValor || '').replace(/\D/g, '');
+
+      if (cep.length === 8) {
+        try {
+          const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+          const data = await response.json();
+
+          if (!data.erro) {
+            if (ruaInput)      ruaInput.value = data.logradouro || '';
+            if (bairroInput)   bairroInput.value = data.bairro || '';
+            if (cidadeInput)   cidadeInput.value = data.localidade || '';
+            if (estadoInput)   estadoInput.value = data.uf || '';
+            if (numeroInput)   numeroInput.focus();
           }
+        } catch (error) {
+          console.error('Erro ao buscar CEP:', error);
+        }
+      }
+    }
+
+    if (cepInput) {
+      // sair do campo
+      cepInput.addEventListener('blur', async function() {
+        await preencherEnderecoPorCEP(this.value);
+      });
+
+      // apertar Enter dentro do campo CEP
+      cepInput.addEventListener('keydown', async function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault(); // evita submit imediato
+          await preencherEnderecoPorCEP(this.value);
         }
       });
+    }
+
+    // ===== RADIOS DOS ENDEREÇOS =====
+    const enderecoRadios = document.querySelectorAll('input[name="endereco_id"]');
+    const btnUseNewAddress = document.getElementById('btn-use-new-address');
+    const radioNovoEndereco = document.getElementById('radio-novo-endereco');
+
+    function marcarCardSelecionado() {
+      const cards = document.querySelectorAll('.saved-address-item');
+      cards.forEach(card => card.classList.remove('selected'));
+
+      enderecoRadios.forEach(radio => {
+        if (radio.checked && radio.value) {
+          const card = radio.closest('.saved-address-item');
+          if (card) card.classList.add('selected');
+        }
+      });
+    }
+
+    function preencherFormComRadio(radio) {
+      if (!radio) return;
+
+      if (radio.value) {
+        // Endereço salvo -> copia dados para os campos (mesmo que form esteja escondido)
+        if (cepInput)         cepInput.value = radio.dataset.cep || '';
+        if (ruaInput)         ruaInput.value = radio.dataset.rua || '';
+        if (numeroInput)      numeroInput.value = radio.dataset.numero || '';
+        if (bairroInput)      bairroInput.value = radio.dataset.bairro || '';
+        if (cidadeInput)      cidadeInput.value = radio.dataset.cidade || '';
+        if (estadoInput)      estadoInput.value = radio.dataset.estado || '';
+        if (complementoInput) complementoInput.value = radio.dataset.complemento || '';
+
+        if (addressFormFields && enderecoRadios.length) {
+          // se tem endereços salvos, deixa o form escondido por padrão
+          addressFormFields.style.display = 'none';
+        }
+      } else {
+        // Novo endereço -> limpa e mostra o form
+        if (cepInput)         cepInput.value = '';
+        if (ruaInput)         ruaInput.value = '';
+        if (numeroInput)      numeroInput.value = '';
+        if (bairroInput)      bairroInput.value = '';
+        if (cidadeInput)      cidadeInput.value = '';
+        if (estadoInput)      estadoInput.value = '';
+        if (complementoInput) complementoInput.value = '';
+
+        if (addressFormFields) {
+          addressFormFields.style.display = 'grid';
+        }
+        if (cepInput) cepInput.focus();
+      }
+    }
+
+    if (enderecoRadios.length) {
+      // Ao mudar de endereço
+      enderecoRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+          preencherFormComRadio(this);
+          marcarCardSelecionado();
+        });
+      });
+
+      // Ao clicar em "Usar novo endereço"
+      if (btnUseNewAddress && radioNovoEndereco) {
+        btnUseNewAddress.addEventListener('click', function() {
+          radioNovoEndereco.checked = true;
+          preencherFormComRadio(radioNovoEndereco);
+          marcarCardSelecionado();
+        });
+      }
+
+      // Inicial: se tiver algum marcado (principal), sincroniza campos
+      const inicial = Array.from(enderecoRadios).find(r => r.checked && r.value);
+      if (inicial) {
+        preencherFormComRadio(inicial);
+        marcarCardSelecionado();
+      }
+    } else {
+      // Cenário sem endereços: form de endereço fica visível por padrão
+      if (addressFormFields) {
+        addressFormFields.style.display = 'grid';
+      }
     }
   </script>
 </body>

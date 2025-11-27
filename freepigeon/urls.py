@@ -43,7 +43,7 @@ urlpatterns = [
     path('carrinho/remover/<int:produto_id>/', views.remover_do_carrinho, name='remover_do_carrinho'),
 
     # checkout / pedidos
-    path('checkout/', views.checkout_page, name='checkout'),  # ← MUDOU (era checkout_view)
+    path('checkout/', views.checkout_view, name='checkout'),
     path('meus-pedidos/', views.meus_pedidos, name='meus_pedidos'),
 
     # stripe - Checkout Session
