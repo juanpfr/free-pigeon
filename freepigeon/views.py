@@ -3,6 +3,8 @@
 # ===============================
 import stripe
 import re
+from .utils_frete import calcular_frete_correios
+from decimal import Decimal
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.hashers import make_password, check_password
@@ -14,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+
 
 # ===============================
 # MODELOS
@@ -570,7 +573,7 @@ def remover_do_carrinho(request, produto_id):
 
 
 # ============================================================
-# CHECKOUT / PEDIDO (versão antiga: checkout_view — parece não usada)
+# CHECKOUT / PEDIDO / FRETE
 # ============================================================
 
 def checkout_view(request):
@@ -901,37 +904,132 @@ def payment_success(request):
 
     return redirect('home')
 
+def _frete_simulado(peso_total: Decimal, cep_destino: str):
+    """
+    Fallback para TCC: se os Correios falharem, gera valores plausíveis.
+    """
+    peso_float = float(peso_total or Decimal('0.3'))
 
-@csrf_exempt
+    base_pac = 15.0 + (peso_float * 5)      # ex: 0.3kg -> ~16.5
+    base_sedex = base_pac + 10.0           # sedex um pouco mais caro
+
+    return [
+        {
+            "codigo": "PAC",
+            "nome": "PAC - (simulado)",
+            "valor": round(base_pac, 2),
+            "prazo_dias": 8,
+        },
+        {
+            "codigo": "SEDEX",
+            "nome": "SEDEX - (simulado)",
+            "valor": round(base_sedex, 2),
+            "prazo_dias": 3,
+        },
+    ]
+
+
+@login_required(login_url='login')
 @require_POST
-def stripe_webhook(request):
-    """Processa webhooks do Stripe"""
-    payload = request.body
-    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+def calcular_frete(request):
+    """
+    Calcula frete usando:
+      - CEP informado no POST (campo 'cep'), OU
+      - CEP do endereço principal do usuário logado, se 'cep' não for enviado.
+
+    Peso:
+      - Se houver itens no carrinho => soma pesos do carrinho
+      - Se carrinho estiver vazio, mas vier 'produto_id' => usa peso do produto * quantidade
+      - Senão => peso padrão 0.3kg
+    """
+    usuario_id = request.session.get('usuario_id')
+    if not usuario_id:
+        return JsonResponse({'error': 'Usuário não autenticado'}, status=401)
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, settings.DJSTRIPE_WEBHOOK_SECRET
+        usuario = Usuario.objects.get(id=usuario_id)
+    except Usuario.DoesNotExist:
+        return JsonResponse({'error': 'Usuário não encontrado'}, status=404)
+
+    # ========= CEP DESTINO =========
+    cep_param = (request.POST.get('cep') or '').strip()
+
+    if cep_param:
+        cep_destino = ''.join(c for c in cep_param if c.isdigit())
+    else:
+        # Tentar CEP do endereço principal do usuário
+        endereco = (
+            usuario.enderecos.filter(principal=True).first()
+            or usuario.enderecos.first()
         )
-    except ValueError:
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError:
-        return HttpResponse(status=400)
 
-    if event['type'] == 'checkout.session.completed':
-        session = event['data']['object']
-        usuario_id = session.get('metadata', {}).get('usuario_id')
+        if not endereco or not endereco.cep:
+            return JsonResponse({
+                'error': 'Informe um CEP ou cadastre um endereço com CEP para calcular o frete.'
+            }, status=400)
 
-        print(f"✓ Checkout concluído para usuário ID {usuario_id}")
-        print(f"  Session ID: {session['id']}")
-        print(f"  Payment Status: {session['payment_status']}")
+        cep_destino = ''.join(c for c in endereco.cep if c.isdigit())
 
-    elif event['type'] == 'payment_intent.succeeded':
-        payment_intent = event['data']['object']
-        print(f"✓ Pagamento {payment_intent['id']} bem-sucedido!")
+    if len(cep_destino) != 8:
+        return JsonResponse({'error': 'CEP inválido.'}, status=400)
 
-    elif event['type'] == 'payment_intent.payment_failed':
-        payment_intent = event['data']['object']
-        print(f"✗ Pagamento {payment_intent['id']} falhou!")
+    # CEP de origem vem do settings
+    cep_origem = getattr(settings, 'CORREIOS_CEP_ORIGEM', '01001000')
 
-    return HttpResponse(status=200)
+    # ========= PESO TOTAL =========
+    peso_total = None
+
+    # 1) Primeiro tenta pelo carrinho
+    carrinho = Carrinho.objects.filter(usuario=usuario).first()
+    if carrinho:
+        itens = list(carrinho.itens.all())
+        if itens:
+            peso_total = Decimal('0.0')
+            for item in itens:
+                peso = getattr(item.produto, 'peso_kg', None)
+                if not peso:
+                    peso = Decimal('0.3')  # 300g default
+                peso_total += peso * item.quantidade
+
+    # 2) Se carrinho estiver vazio, tenta pelo produto_id enviado
+    if peso_total is None:
+        produto_id = request.POST.get('produto_id')
+        qtd = request.POST.get('quantidade') or '1'
+        try:
+            qtd_int = int(qtd)
+            if qtd_int <= 0:
+                qtd_int = 1
+        except ValueError:
+            qtd_int = 1
+
+        if produto_id:
+            try:
+                produto = Produto.objects.get(id=produto_id)
+                peso = getattr(produto, 'peso_kg', None)
+                if not peso:
+                    peso = Decimal('0.3')
+                peso_total = peso * qtd_int
+            except Produto.DoesNotExist:
+                pass
+
+    # 3) Último fallback: peso padrão
+    if peso_total is None:
+        peso_total = Decimal('0.3')
+
+    # ========= CHAMAR CORREIOS / FALLBACK =========
+    opcoes = []
+
+    try:
+        opcoes = calcular_frete_correios(
+            cep_origem=cep_origem,
+            cep_destino=cep_destino,
+            peso_kg=peso_total
+        )
+    except Exception as e:
+        print('[FRETE] Exceção chamando Correios:', e)
+
+    if not opcoes:
+        print('[FRETE] Usando valores simulados de frete.')
+        opcoes = _frete_simulado(peso_total, cep_destino)
+
+    return JsonResponse({'success': True, 'opcoes': opcoes})

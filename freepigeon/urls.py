@@ -51,4 +51,7 @@ urlpatterns = [
     path('pagamento/sucesso/', views.payment_success, name='payment_success'),  # ← NOVO
     path('webhook/', views.stripe_webhook, name='stripe_webhook'),
     path('stripe/', include('djstripe.urls', namespace='djstripe')),
+
+    # Frete
+    path('calcular-frete/', views.calcular_frete, name='calcular_frete'),
 ]

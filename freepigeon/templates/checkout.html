@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{% static 'css/checkout.css' %}">
   <script src="https://js.stripe.com/v3/"></script>
   <style>
+    /* ===== OVERLAY DE CARREGAMENTO ===== */
     .loading {
       display: none;
       position: fixed;
@@ -41,16 +42,25 @@
     }
     
     .error-message {
-      background-color: #f8d7da;
-      color: #721c24;
-      padding: 12px;
-      border-radius: 4px;
+      background-color: #fef2f2;
+      color: #991b1b;
+      padding: 12px 14px;
+      border-radius: 8px;
       margin-bottom: 15px;
       display: none;
+      font-size: 0.9rem;
+      border: 1px solid #fecaca;
     }
     
     .error-message.active {
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .error-message::before {
+      content: "⚠️";
+      font-size: 1rem;
     }
     
     .btn-confirm:disabled {
@@ -58,56 +68,194 @@
       cursor: not-allowed;
     }
 
+    /* ===== CABEÇALHO / STEPS ===== */
+    .checkout-main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    .checkout-main > h1 {
+      font-size: 1.6rem;
+      margin-bottom: 12px;
+    }
+
+    .checkout-subtitle {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 18px;
+    }
+
+    .checkout-steps {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      font-size: 0.8rem;
+    }
+
+    .checkout-step {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .checkout-step span.step-index {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: #e5e7eb;
+    }
+
+    .checkout-step.active {
+      background: #e0ecff;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    .checkout-step.active span.step-index {
+      background: #1d4ed8;
+      color: #fff;
+    }
+
+    /* ===== LAYOUT PRINCIPAL ===== */
+    .checkout-container {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 900px) {
+      .checkout-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .address-section,
+    .order-summary {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px 18px 20px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      border: 1px solid #e5e7eb;
+    }
+
+    .address-section h2,
+    .order-summary h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+    }
+
+    .address-section h2::before {
+      content: "📍";
+    }
+
+    .order-summary h2::before {
+      content: "🧾";
+    }
+
+    /* ===== PAGAMENTO ===== */
+    .payment-methods-title {
+      margin-top: 18px;
+      margin-bottom: 6px;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .payment-methods-title::before {
+      content: "💳";
+    }
+
     .payment-methods {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin: 15px 0;
+      gap: 10px;
+      margin: 8px 0 10px;
     }
 
     .payment-methods label {
       display: flex;
       align-items: center;
-      padding: 12px;
-      border: 2px solid #ddd;
-      border-radius: 8px;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
       cursor: pointer;
       transition: all 0.2s ease;
+      background: #f9fafb;
+    }
+
+    .payment-method-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .payment-method-tag {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #dbebff;
+      color: #1d4ed8;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+    }
+
+    .payment-method-legend {
+      font-size: 0.78rem;
+      color: #6b7280;
     }
 
     .payment-methods label:hover {
-      border-color: #3498db;
-      background-color: #f8f9fa;
+      border-color: #2563eb;
+      background-color: #eff6ff;
     }
 
-    .payment-methods input[type="radio"]:checked + span {
-      font-weight: bold;
-      color: #1a1a1a;
+    .payment-methods input[type="radio"]:checked + .payment-method-main span.payment-label {
+      font-weight: 600;
+      color: #111827;
     }
 
     .payment-methods label input {
-      margin-right: 10px;
+      margin-right: 6px;
     }
 
     .payment-info {
-      font-size: 0.9em;
-      color: #666;
-      margin-top: 10px;
-      padding: 10px;
-      background-color: #f0f8ff;
-      border-radius: 6px;
+      font-size: 0.82em;
+      color: #4b5563;
+      margin-top: 6px;
+      padding: 8px 10px;
+      background-color: #f0f9ff;
+      border-radius: 8px;
+      border: 1px dashed #bfdbfe;
     }
 
-    /* ===== Estilo dos endereços (estilo Mercado Livre) ===== */
+    /* ===== ENDEREÇOS (Mercado Livre style) ===== */
 
     .saved-addresses {
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.3rem;
       border-radius: 12px;
     }
 
     .saved-addresses h3 {
-      font-size: 1rem;
-      margin-bottom: 0.75rem;
+      font-size: 0.9rem;
+      margin-bottom: 0.65rem;
+      color: #374151;
     }
 
     .saved-address-item {
@@ -116,27 +264,28 @@
       gap: 0.6rem;
       padding: 0.75rem 0.9rem;
       border-radius: 10px;
-      border: 1px solid #e0e0e0;
+      border: 1px solid #e5e7eb;
       background-color: #fff;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, transform 0.12s ease;
       margin-bottom: 0.5rem;
     }
 
     .saved-address-item:hover {
-      border-color: #3483fa;
-      box-shadow: 0 0 0 1px rgba(52, 131, 250, 0.15);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
       background-color: #f9fbff;
+      transform: translateY(-1px);
     }
 
     .saved-address-item input[type="radio"] {
       margin-top: 4px;
-      accent-color: #3483fa;
+      accent-color: #2563eb;
     }
 
     .saved-address-item.selected {
-      border-color: #3483fa;
-      box-shadow: 0 0 0 1px rgba(52, 131, 250, 0.25);
-      background-color: #f4f7ff;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+      background-color: #eff6ff;
     }
 
     .saved-address-label-title {
@@ -144,28 +293,29 @@
       align-items: center;
       gap: .35rem;
       font-weight: 600;
-      color: #333;
+      color: #111827;
+      font-size: 0.9rem;
     }
 
     .saved-address-chip {
       font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 999px;
-      background: #dff5dd;
-      color: #2e7d32;
+      background: #dcfce7;
+      color: #166534;
       text-transform: uppercase;
       letter-spacing: .03em;
     }
 
     .saved-address-text {
-      font-size: 0.85rem;
-      color: #555;
+      font-size: 0.83rem;
+      color: #4b5563;
     }
 
     .use-new-address {
       margin-top: 0.4rem;
-      font-size: 0.85rem;
-      color: #3483fa;
+      font-size: 0.82rem;
+      color: #2563eb;
       cursor: pointer;
       text-decoration: underline;
       border: none;
@@ -174,10 +324,10 @@
     }
 
     .use-new-address:hover {
-      color: #2968c8;
+      color: #1d4ed8;
     }
 
-    /* Form de endereço (quando exibido) */
+    /* ===== FORM DE ENDEREÇO ===== */
 
     .address-form-grid {
       display: grid;
@@ -189,6 +339,257 @@
     .address-form-grid .form-group {
       margin-bottom: 0;
     }
+
+    .address-form-grid label {
+      font-size: 0.82rem;
+      color: #374151;
+      margin-bottom: 2px;
+      display: inline-block;
+    }
+
+    .address-form-grid input {
+      width: 100%;
+      padding: 8px 9px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .address-form-grid input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2);
+      background: #f9fafb;
+    }
+
+    .cep-hint {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    /* ===== FRETE ===== */
+    .frete-box {
+      margin: 10px 0 15px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #e5e7eb;
+      background-color: #f9fafb;
+      font-size: 0.9rem;
+    }
+
+    .frete-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .frete-header span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .frete-header span::before {
+      content: "🚚";
+    }
+
+    .frete-subtext {
+      font-size: 0.78rem;
+      color: #6b7280;
+      margin-bottom: 5px;
+    }
+
+    .btn-calcular-frete {
+      padding: 6px 11px;
+      border-radius: 999px;
+      border: 1px solid #2563eb;
+      background-color: #2563eb;
+      color: #fff;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-calcular-frete::before {
+      content: "↻";
+      font-size: 0.85rem;
+    }
+
+    .btn-calcular-frete:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-calcular-frete:hover:not(:disabled) {
+      background-color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    #frete-opcoes {
+      margin-top: 6px;
+    }
+
+    #frete-opcoes label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      font-size: 0.83rem;
+      padding: 6px 8px;
+      border-radius: 8px;
+      transition: background 0.12s ease;
+    }
+
+    #frete-opcoes label:hover {
+      background: #e5e7eb;
+    }
+
+    #frete-opcoes input {
+      margin-right: 3px;
+    }
+
+    #frete-escolhido {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: #374151;
+    }
+
+    .frete-loading {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    /* ===== RESUMO DO PEDIDO ===== */
+
+    .order-items {
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .order-items::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .order-items::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 999px;
+    }
+
+    .order-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .order-item img {
+      width: 52px;
+      height: 52px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .order-item .details span {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #111827;
+    }
+
+    .order-item .details small {
+      font-size: 0.78rem;
+      color: #6b7280;
+    }
+
+    .order-item .subtotal {
+      margin-left: auto;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .order-summary hr {
+      border: none;
+      border-top: 1px solid #e5e7eb;
+      margin: 10px 0;
+    }
+
+    .order-summary p {
+      font-size: 0.9rem;
+      margin: 4px 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .order-summary p strong {
+      font-weight: 600;
+    }
+
+    #total-com-frete {
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px dashed #e5e7eb;
+      font-size: 0.98rem;
+    }
+
+    #total-com-frete strong {
+      color: #111827;
+    }
+
+    .total-highlight {
+      font-size: 1.05rem;
+      color: #16a34a;
+      font-weight: 700;
+    }
+
+    .btn-confirm {
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px 0;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(90deg, #10b981, #22c55e);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.1s ease;
+    }
+
+    .btn-confirm:hover:not(:disabled) {
+      filter: brightness(1.03);
+      box-shadow: 0 8px 22px rgba(16, 185, 129, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn-confirm:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 5px 16px rgba(16, 185, 129, 0.28);
+    }
+
+    .secure-payment-hint {
+      margin-top: 4px;
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-align: center;
+    }
+
+    .secure-payment-hint::before {
+      content: "🔒";
+      margin-right: 4px;
+    }
   </style>
 </head>
 
@@ -197,7 +598,23 @@
     {% include 'partials/header.html' %}
 
     <main class="checkout-main">
-      <h1>Finalizar Compra</h1>
+      <h1>Finalizar compra</h1>
+      <p class="checkout-subtitle">Revise seus dados, calcule o frete e escolha a forma de pagamento.</p>
+
+      <div class="checkout-steps">
+        <div class="checkout-step active">
+          <span class="step-index">1</span>
+          <span>Entrega</span>
+        </div>
+        <div class="checkout-step">
+          <span class="step-index">2</span>
+          <span>Pagamento</span>
+        </div>
+        <div class="checkout-step">
+          <span class="step-index">3</span>
+          <span>Confirmação</span>
+        </div>
+      </div>
 
       {% if itens %}
       <div class="checkout-container">
@@ -213,7 +630,7 @@
             {# LISTA DE ENDEREÇOS EXISTENTES #}
             {% if enderecos %}
               <div class="saved-addresses">
-                <h3>Meus endereços</h3>
+                <h3>Selecione um endereço salvo</h3>
 
                 {% for end in enderecos %}
                   <label class="saved-address-item {% if endereco and end.id == endereco.id %}selected{% endif %}">
@@ -251,7 +668,7 @@
                 {% endfor %}
 
                 <button type="button" id="btn-use-new-address" class="use-new-address">
-                  Usar novo endereço
+                  + Usar novo endereço
                 </button>
 
                 {# Radio "virtual" para novo endereço #}
@@ -272,6 +689,7 @@
                 <label for="cep">CEP</label>
                 <input type="text" id="cep" name="cep" placeholder="00000-000"
                        value="{{ endereco.cep|default:'' }}" required>
+                <p class="cep-hint">Preencha o CEP para buscar o endereço automaticamente.</p>
               </div>
 
               <div class="form-group">
@@ -312,22 +730,33 @@
               </div>
             </div>
 
-            <h2>Método de Pagamento</h2>
+            <h3 class="payment-methods-title">Método de pagamento</h3>
             <div class="payment-methods">
               <label>
-                <input type="radio" name="pagamento" value="pix" checked required>
-                <span>🔷 PIX - Pagamento instantâneo</span>
+                <div class="payment-method-main">
+                  <input type="radio" name="pagamento" value="pix" checked required>
+                  <span class="payment-label">PIX - Pagamento instantâneo</span>
+                  <span class="payment-method-tag">Recomendado</span>
+                </div>
+                <span class="payment-method-legend">
+                  Aprovação na hora. Você receberá o QR Code após confirmar o pedido.
+                </span>
               </label>
               
               <label>
-                <input type="radio" name="pagamento" value="cartao" required>
-                <span>💳 Cartão de Crédito</span>
+                <div class="payment-method-main">
+                  <input type="radio" name="pagamento" value="cartao" required>
+                  <span class="payment-label">Cartão de Crédito</span>
+                </div>
+                <span class="payment-method-legend">
+                  Pagamento seguro processado pela Stripe.
+                </span>
               </label>
             </div>
             
             <div class="payment-info">
-              <strong>PIX:</strong> Você receberá um QR Code para pagar instantaneamente<br>
-              <strong>Cartão:</strong> Processamento seguro via Stripe
+              Pagamentos são processados com segurança pela <strong>Stripe</strong>.  
+              Seus dados de cartão não são armazenados pela Free Pigeon.
             </div>
         </section>
 
@@ -353,12 +782,40 @@
 
           <hr>
 
-          <p><strong>Total de Itens:</strong> {{ itens|length }}</p>
-          <p><strong>Total Geral:</strong> R$ {{ total|floatformat:2 }}</p>
+          {# FRETE #}
+          <div class="frete-box">
+            <div class="frete-header">
+              <span>Frete e prazo</span>
+              <button type="button" id="btn-calcular-frete" class="btn-calcular-frete">
+                Calcular frete
+              </button>
+            </div>
+            <p class="frete-subtext">
+              Use o CEP do endereço selecionado para ver opções de envio.
+            </p>
+            <div id="frete-opcoes" style="display:none;"></div>
+            <p id="frete-escolhido"></p>
+          </div>
+
+          <hr>
+
+          <p><strong>Total de Itens:</strong> <span>{{ itens|length }}</span></p>
+          <p><strong>Total Produtos:</strong> <span>R$ {{ total|floatformat:2 }}</span></p>
+          <p id="total-com-frete">
+            <strong>Total com Frete:</strong> 
+            <span class="total-highlight">R$ {{ total|floatformat:2 }}</span>
+          </p>
+
+          {# campos hidden pro backend #}
+          <input type="hidden" name="frete_codigo" id="frete_codigo">
+          <input type="hidden" name="frete_valor" id="frete_valor">
 
           <button type="submit" id="submit-button" class="btn-confirm">
-            Finalizar Pagamento
+            Finalizar pagamento
           </button>
+          <p class="secure-payment-hint">
+            Ambiente seguro · Dados protegidos
+          </p>
         </aside>
 
         </form>
@@ -389,6 +846,9 @@
     const submitButton = document.getElementById('submit-button');
     const errorMessage = document.getElementById('error-message');
     const loadingOverlay = document.getElementById('loading');
+
+    const freteCodigoInput = document.getElementById('frete_codigo');
+    const freteValorInput = document.getElementById('frete_valor');
 
     function showError(message) {
       errorMessage.textContent = message;
@@ -421,8 +881,18 @@
         return;
       }
 
+      // alerta de UX: se o frete não estiver selecionado, avisa
+      if (!freteValorInput.value) {
+        const continuar = confirm(
+          'Você ainda não selecionou uma opção de frete. Deseja continuar mesmo assim?'
+        );
+        if (!continuar) {
+          return;
+        }
+      }
+
       submitButton.disabled = true;
-      submitButton.textContent = 'Processando...';
+      submitButton.textContent = 'Redirecionando para pagamento...';
       loadingOverlay.classList.add('active');
 
       try {
@@ -456,7 +926,7 @@
         showError(error.message || 'Ocorreu um erro ao processar o pagamento.');
         
         submitButton.disabled = false;
-        submitButton.textContent = 'Finalizar Pagamento';
+        submitButton.textContent = 'Finalizar pagamento';
         loadingOverlay.classList.remove('active');
       }
     });
@@ -493,15 +963,13 @@
     }
 
     if (cepInput) {
-      // sair do campo
       cepInput.addEventListener('blur', async function() {
         await preencherEnderecoPorCEP(this.value);
       });
 
-      // apertar Enter dentro do campo CEP
       cepInput.addEventListener('keydown', async function(e) {
         if (e.key === 'Enter') {
-          e.preventDefault(); // evita submit imediato
+          e.preventDefault();
           await preencherEnderecoPorCEP(this.value);
         }
       });
@@ -528,7 +996,6 @@
       if (!radio) return;
 
       if (radio.value) {
-        // Endereço salvo -> copia dados para os campos (mesmo que form esteja escondido)
         if (cepInput)         cepInput.value = radio.dataset.cep || '';
         if (ruaInput)         ruaInput.value = radio.dataset.rua || '';
         if (numeroInput)      numeroInput.value = radio.dataset.numero || '';
@@ -538,11 +1005,9 @@
         if (complementoInput) complementoInput.value = radio.dataset.complemento || '';
 
         if (addressFormFields && enderecoRadios.length) {
-          // se tem endereços salvos, deixa o form escondido por padrão
           addressFormFields.style.display = 'none';
         }
       } else {
-        // Novo endereço -> limpa e mostra o form
         if (cepInput)         cepInput.value = '';
         if (ruaInput)         ruaInput.value = '';
         if (numeroInput)      numeroInput.value = '';
@@ -559,7 +1024,6 @@
     }
 
     if (enderecoRadios.length) {
-      // Ao mudar de endereço
       enderecoRadios.forEach(radio => {
         radio.addEventListener('change', function() {
           preencherFormComRadio(this);
@@ -567,7 +1031,6 @@
         });
       });
 
-      // Ao clicar em "Usar novo endereço"
       if (btnUseNewAddress && radioNovoEndereco) {
         btnUseNewAddress.addEventListener('click', function() {
           radioNovoEndereco.checked = true;
@@ -576,17 +1039,129 @@
         });
       }
 
-      // Inicial: se tiver algum marcado (principal), sincroniza campos
       const inicial = Array.from(enderecoRadios).find(r => r.checked && r.value);
       if (inicial) {
         preencherFormComRadio(inicial);
         marcarCardSelecionado();
       }
     } else {
-      // Cenário sem endereços: form de endereço fica visível por padrão
       if (addressFormFields) {
         addressFormFields.style.display = 'grid';
       }
+    }
+
+    // ===== FRETE (Correios via backend) =====
+    const btnCalcularFrete = document.getElementById('btn-calcular-frete');
+    const freteOpcoesDiv = document.getElementById('frete-opcoes');
+    const freteEscolhidoP = document.getElementById('frete-escolhido');
+    const totalComFreteP = document.getElementById('total-com-frete');
+
+    const totalProdutos = parseFloat('{{ total|floatformat:2 }}'.replace(',', '.')) || 0;
+    let freteSelecionado = null;
+
+    async function calcularFrete() {
+      const cepValor = cepInput ? cepInput.value : '';
+
+      if (!cepValor) {
+        showError('Informe o CEP para calcular o frete.');
+        if (cepInput) cepInput.focus();
+        return;
+      }
+
+      const cepLimpo = cepValor.replace(/\D/g, '');
+      if (cepLimpo.length !== 8) {
+        showError('CEP inválido. Use o formato 00000-000.');
+        if (cepInput) cepInput.focus();
+        return;
+      }
+
+      try {
+        btnCalcularFrete.disabled = true;
+        btnCalcularFrete.textContent = 'Calculando...';
+
+        freteOpcoesDiv.style.display = 'block';
+        freteOpcoesDiv.innerHTML = '<p class="frete-loading">Buscando opções de frete...</p>';
+        freteEscolhidoP.textContent = '';
+
+        const params = new URLSearchParams();
+        params.append('cep', cepLimpo);
+
+        const response = await fetch('{% url "calcular_frete" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: params
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.error) {
+          throw new Error(data.error || 'Erro ao calcular frete.');
+        }
+
+        freteOpcoesDiv.innerHTML = '';
+        freteSelecionado = null;
+        freteCodigoInput.value = '';
+        freteValorInput.value = '';
+
+        data.opcoes.forEach((opcao, index) => {
+          const id = `frete-opcao-${index}`;
+          const valorFormat = Number(opcao.valor).toFixed(2).replace('.', ',');
+
+          const label = document.createElement('label');
+          label.innerHTML = `
+            <input type="radio" name="frete_opcao"
+                   id="${id}"
+                   data-codigo="${opcao.codigo}"
+                   data-valor="${opcao.valor}">
+            ${opcao.nome} (${opcao.codigo}) · R$ ${valorFormat} · até ${opcao.prazo_dias} dia(s) útil(is)
+          `;
+          freteOpcoesDiv.appendChild(label);
+        });
+
+        const radiosFrete = freteOpcoesDiv.querySelectorAll('input[name="frete_opcao"]');
+        radiosFrete.forEach(radio => {
+          radio.addEventListener('change', function() {
+            const valorFrete = parseFloat(this.dataset.valor);
+            freteSelecionado = {
+              codigo: this.dataset.codigo,
+              valor: valorFrete
+            };
+
+            const totalFinal = totalProdutos + (valorFrete || 0);
+            const totalFinalStr = totalFinal.toFixed(2).replace('.', ',');
+
+            freteEscolhidoP.textContent =
+              `Frete selecionado: ${freteSelecionado.codigo} · R$ ${valorFrete.toFixed(2).replace('.', ',')}`;
+
+            totalComFreteP.innerHTML =
+              `<strong>Total com Frete:</strong> <span class="total-highlight">R$ ${totalFinalStr}</span>`;
+
+            freteCodigoInput.value = freteSelecionado.codigo;
+            freteValorInput.value = freteSelecionado.valor;
+          });
+        });
+
+        // UX: se houver opções, seleciona automaticamente a primeira (normalmente a mais barata)
+        if (radiosFrete.length > 0) {
+          radiosFrete[0].checked = true;
+          radiosFrete[0].dispatchEvent(new Event('change'));
+        }
+
+      } catch (err) {
+        console.error(err);
+        showError(err.message || 'Erro ao calcular frete.');
+        freteOpcoesDiv.innerHTML = '';
+      } finally {
+        btnCalcularFrete.disabled = false;
+        btnCalcularFrete.textContent = 'Calcular frete';
+      }
+    }
+
+    if (btnCalcularFrete) {
+      btnCalcularFrete.addEventListener('click', calcularFrete);
     }
   </script>
 </body>

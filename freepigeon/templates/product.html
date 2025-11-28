@@ -8,6 +8,502 @@
   <meta name="description" content="{{ produto.descricao|default:'Detalhes do produto.' }}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/product.css' %}">
+  <style>
+    /* ===== LAYOUT GERAL ===== */
+    .product-main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .product-header-breadcrumb {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .product-header-breadcrumb a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+
+    .product-header-breadcrumb a:hover {
+      text-decoration: underline;
+    }
+
+    .product-title {
+      font-size: 1.6rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #111827;
+    }
+
+    .product-subtitle {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 18px;
+    }
+
+    .product-view-container {
+      display: grid;
+      grid-template-columns: minmax(0, 3.2fr) minmax(0, 2.3fr);
+      gap: 22px;
+      align-items: flex-start;
+    }
+
+    @media (max-width: 960px) {
+      .product-view-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .product-gallery {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      border: 1px solid #e5e7eb;
+    }
+
+    .product-side-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .product-main-card,
+    .purchase-box,
+    .seller-info-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+      border: 1px solid #e5e7eb;
+    }
+
+    /* ===== GALERIA ===== */
+    .main-image-container {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 320px;
+    }
+
+    .main-image-container img {
+      max-width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .discount-badge {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      background: #ff5a23;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      box-shadow: 0 6px 14px rgba(249, 115, 22, 0.45);
+    }
+
+    /* ===== INFO PRINCIPAL (PREÇO + FRETE) ===== */
+
+    .product-price-block {
+      margin-bottom: 10px;
+    }
+
+    .product-price-label {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 2px;
+    }
+
+    .product-price {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .product-price del {
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    .product-price strong {
+      font-size: 1.8rem;
+      color: #00a650; /* Verde Mercado Livre */
+      font-weight: 700;
+    }
+
+    .price-hint {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .stock-info {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: #00a650;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .stock-info::before {
+      content: "✔";
+      font-size: 0.85rem;
+    }
+
+    /* ===== CAIXA DE FRETE (MERCADO LIVRE STYLE) ===== */
+
+    .shipping-box {
+      margin-top: 0.75rem;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      border: 1px solid #e0e0e0;
+      background-color: #f5f9ff;
+      font-size: 0.9rem;
+    }
+
+    .shipping-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    .shipping-header-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .shipping-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    .shipping-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #111827;
+    }
+
+    .shipping-subtext {
+      font-size: 0.8rem;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .shipping-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      align-items: center;
+    }
+
+    .shipping-form input[type="text"] {
+      flex: 1 1 140px;
+      min-width: 0;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #cbd5f5;
+      font-size: 0.9rem;
+      background: #ffffff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .shipping-form input[type="text"]:focus {
+      outline: none;
+      border-color: #3483fa;
+      box-shadow: 0 0 0 1px rgba(52, 131, 250, 0.35);
+    }
+
+    .shipping-form button {
+      padding: 7px 12px;
+      border-radius: 8px;
+      border: 1px solid #3483fa;
+      background-color: #3483fa;
+      color: #fff;
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.2s ease, transform 0.08s ease;
+    }
+
+    .shipping-form button::before {
+      content: "↻";
+      font-size: 0.85rem;
+    }
+
+    .shipping-form button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .shipping-form button:hover:not(:disabled) {
+      background-color: #2968c8;
+      transform: translateY(-1px);
+    }
+
+    .shipping-cep-help {
+      font-size: 0.78rem;
+      color: #2563eb;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .shipping-cep-help:hover {
+      color: #1d4ed8;
+    }
+
+    #frete-resultado-produto p {
+      margin: 2px 0;
+      font-size: 0.82rem;
+      color: #111827;
+    }
+
+    #frete-erro-produto {
+      color: #b3261e;
+      margin-top: 4px;
+      font-size: 0.8rem;
+    }
+
+    .shipping-note {
+      display: block;
+      margin-top: 2px;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    /* ===== CAIXA DE COMPRA ===== */
+
+    .purchase-box h3 {
+      font-size: 1rem;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .purchase-box h3::before {
+      content: "🛒";
+    }
+
+    .purchase-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+    }
+
+    .purchase-row span:last-child {
+      font-weight: 600;
+    }
+
+    .purchase-quantity {
+      margin: 10px 0 8px;
+      font-size: 0.9rem;
+    }
+
+    .purchase-quantity label {
+      margin-right: 6px;
+    }
+
+    .purchase-quantity input[type="number"] {
+      width: 70px;
+      padding: 5px 6px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary-buy,
+    .btn-add-to-cart {
+      width: 100%;
+      padding: 9px 0;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.1s ease;
+    }
+
+    .btn-primary-buy {
+      background: #3483fa;
+      color: #ffffff;
+      box-shadow: 0 8px 20px rgba(52, 131, 250, 0.4);
+    }
+
+    .btn-add-to-cart {
+      background: #e3edfb;
+      color: #0f172a;
+      border: 1px solid #c7d2fe;
+      box-shadow: 0 4px 10px rgba(148, 163, 184, 0.3);
+    }
+
+    .btn-primary-buy:hover,
+    .btn-add-to-cart:hover {
+      filter: brightness(1.03);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary-buy:active,
+    .btn-add-to-cart:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .purchase-hints {
+      margin-top: 6px;
+      font-size: 0.78rem;
+      color: #6b7280;
+    }
+
+    .purchase-hints p {
+      margin: 0;
+    }
+
+    .purchase-hints p::before {
+      content: "✔ ";
+      color: #00a650;
+    }
+
+    /* ===== INFO DO VENDEDOR ===== */
+
+    .seller-info-card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .seller-info-card h3::before {
+      content: "🏬";
+    }
+
+    .seller-info-card p {
+      font-size: 0.86rem;
+      margin: 2px 0;
+      color: #374151;
+    }
+
+    .seller-badge {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.78rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #1d4ed8;
+    }
+
+    /* ===== DESCRIÇÃO / DETALHES ===== */
+
+    .product-main-card h2 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .specs-grid p {
+      margin-bottom: 4px;
+      font-size: 0.9rem;
+    }
+
+    .product-description-title {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .product-description-text {
+      font-size: 0.9rem;
+      color: #4b5563;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    /* ===== RELACIONADOS ===== */
+
+    .related-items-section {
+      margin-top: 28px;
+    }
+
+    .related-items-section h2 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .product-card {
+      display: block;
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid #e5e7eb;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: #f9fafb;
+    }
+
+    .product-card h3 {
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: #111827;
+    }
+
+    .product-card p {
+      font-size: 0.9rem;
+      color: #00a650;
+      font-weight: 600;
+    }
+
+    .product-card:hover {
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+      transform: translateY(-1px);
+      border-color: #c7d2fe;
+    }
+  </style>
 </head>
 
 <body>
@@ -15,7 +511,19 @@
     {% include 'partials/header.html' %}
 
     <main class="product-main">
+      <div class="product-header-breadcrumb">
+        <a href="{% url 'home' %}">Início</a> ›
+        <a href="#">{{ produto.categoria.nome }}</a> ›
+        <span>{{ produto.nome }}</span>
+      </div>
+
+      <h1 class="product-title">{{ produto.nome }}</h1>
+      <p class="product-subtitle">
+        Confira as informações, calcule o frete e finalize sua compra com segurança.
+      </p>
+
       <div class="product-view-container">
+        <!-- ESQUERDA: IMAGEM + DETALHES -->
         <div class="product-gallery">
           <div class="main-image-container">
             <img src="{{ produto.imagem.url|default:'/static/img/sem-imagem.png' }}" alt="{{ produto.nome }}">
@@ -25,59 +533,128 @@
           </div>
         </div>
 
-        <div class="product-details-wrapper">
-          <div class="product-details">
-            <h1>{{ produto.nome }}</h1>
+        <!-- DIREITA: PREÇO + FRETE + COMPRA + VENDEDOR -->
+        <div class="product-side-panel">
 
-            <div class="product-specs">
-              <h2>Informações do produto:</h2>
-              <div class="specs-grid">
-                {% if produto.tamanho %}
-                  <p><strong>Tamanho:</strong> {{ produto.tamanho }}</p>
+          <div class="product-main-card">
+            <div class="product-price-block">
+              <div class="product-price-label">Preço do produto</div>
+              <p class="product-price">
+                {% if produto.desconto %}
+                  <del>R$ {{ produto.valor|floatformat:2 }}</del>
+                  <strong>R$ {{ produto.preco_final|floatformat:2 }}</strong>
+                {% else %}
+                  <strong>R$ {{ produto.valor|floatformat:2 }}</strong>
                 {% endif %}
-                {% if produto.tensao %}
-                  <p><strong>Tensão:</strong> {{ produto.tensao }}</p>
-                {% endif %}
-                {% if produto.comprimento %}
-                  <p><strong>Comprimento:</strong> {{ produto.comprimento }} cm</p>
-                {% endif %}
-                {% if produto.peso %}
-                  <p><strong>Peso:</strong> {{ produto.peso }} g</p>
-                {% endif %}
-                {% if produto.descricao %}
-                  <p><strong>Descrição:</strong> {{ produto.descricao }}</p>
-                {% endif %}
-              </div>
+              </p>
+              <p class="price-hint">Em até 12x no cartão (via Stripe).</p>
+              {% if produto.q_estoque > 0 %}
+                <p class="stock-info">Estoque disponível · {{ produto.q_estoque }} unidade(s)</p>
+              {% else %}
+                <p class="stock-info" style="color:#b91c1c;">Produto indisponível no momento</p>
+              {% endif %}
             </div>
 
-            <p class="product-price">
-              {% if produto.desconto %}
-                <del>R$ {{ produto.valor|floatformat:2 }}</del>
-                <strong>R$ {{ produto.preco_final|floatformat:2 }}</strong>
-              {% else %}
-                <strong>R$ {{ produto.valor|floatformat:2 }}</strong>
-              {% endif %}
-            </p>
+            {# CALCULADORA DE FRETE (MODO MERCADO LIVRE) #}
+            <div class="shipping-box">
+              <div class="shipping-header">
+                <div class="shipping-header-left">
+                  <div class="shipping-icon">🚚</div>
+                  <div>
+                    <div class="shipping-title">Frete e prazo de entrega</div>
+                    <div class="shipping-subtext">
+                      Informe o CEP para ver as opções de envio.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="shipping-form">
+                <input type="text" id="cep-frete" placeholder="Digite seu CEP (00000-000)">
+                <button type="button" id="btn-calcular-frete-produto">
+                  Calcular frete
+                </button>
+                <span class="shipping-cep-help" onclick="window.open('https://buscacepinter.correios.com.br/app/endereco/index.php', '_blank')">
+                  Não sei meu CEP
+                </span>
+              </div>
+
+              <div id="frete-resultado-produto"></div>
+              <div id="frete-erro-produto"></div>
+              <small class="shipping-note">
+                Valores estimados com base nos Correios (ou simulação quando o serviço não responder).
+              </small>
+            </div>
           </div>
 
           <div class="purchase-box">
-            <div class="seller-info">
-              <h3>Informações de venda</h3>
-              <p>Vendido por: {{ produto.loja.nome|default:"Loja Parceira" }}</p>
-              <p>Categoria: {{ produto.categoria.nome }}</p>
+            <h3>Comprar este produto</h3>
+
+            <div class="purchase-row">
+              <span>Produto</span>
+              {% if produto.desconto %}
+                <span>R$ {{ produto.preco_final|floatformat:2 }}</span>
+              {% else %}
+                <span>R$ {{ produto.valor|floatformat:2 }}</span>
+              {% endif %}
             </div>
 
-            <form action="{% url 'adicionar_ao_carrinho' produto.id %}" method="post">
-              {% csrf_token %}
-              <label for="quantidade">Quantidade:</label>
-              <input type="number" id="quantidade" name="quantidade" value="1" min="1" max="{{ produto.q_estoque }}">
-              <br>
-              <button type="submit" class="btn-add-to-cart">Adicionar ao carrinho</button>
-            </form>
+            <div class="purchase-quantity">
+              <form action="{% url 'adicionar_ao_carrinho' produto.id %}" method="post">
+                {% csrf_token %}
+                <label for="quantidade">Quantidade:</label>
+                <input type="number" id="quantidade" name="quantidade"
+                       value="1" min="1" max="{{ produto.q_estoque }}">
+                
+                <button type="submit" class="btn-add-to-cart" style="margin-top:10px;">
+                  Adicionar ao carrinho
+                </button>
+              </form>
+            </div>
+
+            <div class="purchase-hints">
+              <p>Pagamento processado com segurança pela Stripe.</p>
+              <p>Você poderá revisar endereço e frete no checkout.</p>
+            </div>
           </div>
+
+          <div class="seller-info-card">
+            <h3>Informações do vendedor</h3>
+            <p><strong>Loja:</strong> {{ produto.loja.nome|default:"Loja Parceira" }}</p>
+            <p><strong>Categoria:</strong> {{ produto.categoria.nome }}</p>
+            <span class="seller-badge">Vendedor Free Pigeon</span>
+          </div>
+
         </div>
       </div>
 
+      <!-- DESCRIÇÃO / ESPECIFICAÇÕES -->
+      <section class="product-main-card" style="margin-top:20px;">
+        <h2>Informações do produto</h2>
+        <div class="specs-grid">
+          {% if produto.tamanho %}
+            <p><strong>Tamanho:</strong> {{ produto.tamanho }}</p>
+          {% endif %}
+          {% if produto.tensao %}
+            <p><strong>Tensão:</strong> {{ produto.tensao }}</p>
+          {% endif %}
+          {% if produto.comprimento %}
+            <p><strong>Comprimento:</strong> {{ produto.comprimento }} cm</p>
+          {% endif %}
+          {% if produto.peso %}
+            <p><strong>Peso:</strong> {{ produto.peso }} g</p>
+          {% endif %}
+        </div>
+
+        {% if produto.descricao %}
+          <div class="product-description-title">Descrição</div>
+          <div class="product-description-text">
+            {{ produto.descricao }}
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- RELACIONADOS -->
       <section class="related-items-section">
         <h2>Produtos relacionados</h2>
         <div class="product-grid">
@@ -98,5 +675,102 @@
   </div>
 
   <script src="{% static 'js/main.js' %}"></script>
+  <script>
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+
+    const cepFreteInput = document.getElementById('cep-frete');
+    const btnCalcularFreteProduto = document.getElementById('btn-calcular-frete-produto');
+    const freteResultadoProduto = document.getElementById('frete-resultado-produto');
+    const freteErroProduto = document.getElementById('frete-erro-produto');
+
+    async function calcularFreteProduto() {
+      if (!cepFreteInput) return;
+
+      freteResultadoProduto.innerHTML = '';
+      freteErroProduto.textContent = '';
+
+      const cepValor = cepFreteInput.value || '';
+      const cepLimpo = cepValor.replace(/\D/g, '');
+
+      if (cepLimpo.length !== 8) {
+        freteErroProduto.textContent = 'CEP inválido. Use o formato 00000-000.';
+        cepFreteInput.focus();
+        return;
+      }
+
+      try {
+        btnCalcularFreteProduto.disabled = true;
+        btnCalcularFreteProduto.textContent = 'Calculando...';
+
+        const params = new URLSearchParams();
+        params.append('cep', cepLimpo);
+
+        // envia o produto atual e a quantidade para calcular o peso
+        params.append('produto_id', '{{ produto.id }}');
+
+        const qtdInput = document.getElementById('quantidade');
+        let qtd = '1';
+        if (qtdInput && qtdInput.value) {
+          qtd = qtdInput.value;
+        }
+        params.append('quantidade', qtd);
+
+        const response = await fetch('{% url "calcular_frete" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: params
+        });
+
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (e) {
+          freteErroProduto.textContent = 'Não foi possível calcular o frete. Faça login para continuar.';
+          return;
+        }
+
+        if (!response.ok || data.error) {
+          freteErroProduto.textContent = data.error || 'Erro ao calcular frete.';
+          return;
+        }
+
+        freteResultadoProduto.innerHTML = '';
+        data.opcoes.forEach(opcao => {
+          const valor = Number(opcao.valor).toFixed(2).replace('.', ',');
+          const linha = document.createElement('p');
+          linha.textContent = `${opcao.nome} (${opcao.codigo}) - R$ ${valor} (até ${opcao.prazo_dias} dia(s) útil(eis))`;
+          freteResultadoProduto.appendChild(linha);
+        });
+
+      } catch (err) {
+        console.error(err);
+        freteErroProduto.textContent = 'Erro ao calcular frete.';
+      } finally {
+        btnCalcularFreteProduto.disabled = false;
+        btnCalcularFreteProduto.textContent = 'Calcular frete';
+      }
+    }
+
+    if (btnCalcularFreteProduto) {
+      btnCalcularFreteProduto.addEventListener('click', calcularFreteProduto);
+    }
+  </script>
 </body>
 </html>

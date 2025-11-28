@@ -184,3 +184,8 @@ LOGIN_REDIRECT_URL = 'google_login_redirect'
 # opcional, mas bom ter:
 LOGIN_URL = 'login'
 LOGOUT_REDIRECT_URL = 'home'
+
+# Correios
+
+CORREIOS_CEP_ORIGEM = '01311923'  # CEP de origem padrão para cálculo de frete
+
