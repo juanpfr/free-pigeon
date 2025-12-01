@@ -9,150 +9,313 @@
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
   <link rel="stylesheet" href="{% static 'css/orders.css' %}">
   <style>
-    /* --- Meus Pedidos Page Styles --- */
     .orders-main {
-      padding: 3rem 5rem;
-      background-color: var(--bg-white);
-      font-family: var(--font-poppins);
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+      background-color: var(--bg-white, #f5f5f5);
+      font-family: var(--font-poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
     }
 
-    .orders-main h1 {
-      font-size: 28px;
-      font-weight: 500;
-      margin-bottom: 2rem;
+    .orders-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 20px;
     }
 
-    /* Lista de pedidos */
+    .orders-header h1 {
+      font-size: 1.7rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--text-dark, #111827);
+    }
+
+    .orders-header p {
+      font-size: .9rem;
+      color: var(--text-gray, #6b7280);
+      margin: 0;
+    }
+
     .orders-list {
       display: flex;
       flex-direction: column;
-      gap: 2.5rem;
+      gap: 14px;
     }
 
-    /* Card de cada pedido */
     .order-card {
-      background-color: #f9f9f9;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+      background-color: #ffffff;
+      border-radius: 14px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+      overflow: hidden;
+    }
+
+    .order-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f9fafb;
+    }
+
+    .order-main-info {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 2px;
     }
 
-    .order-card h2 {
-      font-size: 20px;
-      margin-bottom: 0.5rem;
+    .order-id {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .order-date {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    .order-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
       font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .03em;
     }
 
-    .order-card p {
-      font-size: 14px;
-      margin: 0.2rem 0;
-      color: var(--text-dark);
+    .status-pago {
+      background: #dcfce7;
+      color: #166534;
     }
 
-    /* Itens do pedido */
+    .status-pendente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-enviado {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .status-cancelado {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .order-total-pill {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+      font-size: 0.85rem;
+    }
+
+    .order-total-pill span:first-child {
+      color: #6b7280;
+    }
+
+    .order-total-pill span:last-child {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #16a34a;
+    }
+
+    .order-card-body {
+      padding: 10px 18px 12px;
+    }
+
     .order-items {
       display: flex;
       flex-direction: column;
-      gap: 1rem;
-      margin-top: 1rem;
+      gap: 8px;
     }
 
     .order-item {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 1rem;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #e0e0e0;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .order-item:last-child {
+      border-bottom: none;
     }
 
     .order-item img {
-      width: 54px;
-      height: 54px;
-      object-fit: contain;
-      border-radius: 6px;
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #f9fafb;
     }
 
-    .order-item div {
-      flex-grow: 1;
+    .order-item-info {
+      flex: 1;
       display: flex;
       flex-direction: column;
+      gap: 2px;
     }
 
-    .order-item p {
-      font-size: 14px;
-      margin: 0;
+    .order-item-name {
+      font-size: 0.9rem;
       font-weight: 500;
+      color: #111827;
     }
 
-    .order-item small {
-      font-size: 12px;
-      color: var(--text-gray);
+    .order-item-extra {
+      font-size: 0.8rem;
+      color: #6b7280;
     }
 
-    .order-item strong {
-      font-size: 14px;
+    .order-item-subtotal {
+      font-size: 0.9rem;
       font-weight: 600;
+      color: #111827;
+      white-space: nowrap;
     }
 
-    /* Separador */
-    .order-card hr {
-      border: 0;
-      border-top: 1px solid #ccc;
-      margin: 1rem 0;
+    .order-card-footer {
+      padding: 8px 18px 12px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: #6b7280;
+      background: #fafafa;
     }
 
-    /* Total do pedido */
-    .order-card p:last-of-type {
-      font-size: 16px;
-      font-weight: 600;
-      text-align: right;
+    .order-address {
+      max-width: 70%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* Página sem pedidos */
+    .order-footer-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-outline,
+    .btn-fill {
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: filter 0.12s ease, transform 0.05s ease;
+    }
+
+    .btn-outline {
+      border-color: #d1d5db;
+      color: #111827;
+      background: #ffffff;
+    }
+
+    .btn-outline:hover {
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+    }
+
+    .btn-fill {
+      background: var(--primary-green, #124106);
+      color: #ffffff;
+      border-color: var(--primary-green, #124106);
+    }
+
+    .btn-fill:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
     .orders-empty {
       text-align: center;
-      padding: 4rem 2rem;
+      padding: 4rem 1rem;
     }
 
     .orders-empty h2 {
-      font-size: 22px;
-      margin-bottom: 1.5rem;
+      font-size: 1.4rem;
+      margin-bottom: 0.75rem;
+      color: #111827;
+    }
+
+    .orders-empty p {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 1.25rem;
     }
 
     .btn-back {
-      display: inline-block;
-      background-color: #124106;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--primary-green, #124106);
       color: #fff;
-      padding: 0.8rem 1.5rem;
-      border-radius: 8px;
+      padding: 0.75rem 1.5rem;
+      border-radius: 999px;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.12s ease, transform 0.05s ease;
     }
 
-    /* Responsive */
-    @media (max-width: 1200px) {
+    .btn-back:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 900px) {
       .orders-main {
-        padding: 2rem 2rem;
+        padding: 24px 12px 40px;
       }
-    }
 
-    @media (max-width: 768px) {
-      .order-item {
+      .order-card-header {
         flex-direction: column;
         align-items: flex-start;
-        gap: 0.5rem;
       }
 
-      .order-item strong {
-        align-self: flex-end;
+      .order-total-pill {
+        align-items: flex-start;
       }
 
-      .order-card p:last-of-type {
-        text-align: left;
+      .order-card-footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .order-address {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .order-item {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+
+      .order-item-subtotal {
+        align-self: flex-start;
       }
     }
   </style>
@@ -163,40 +326,100 @@
     {% include 'partials/header.html' %}
 
     <main class="orders-main">
-      <h1>Meus Pedidos</h1>
+      <div class="orders-header">
+        <div>
+          <h1>Meus pedidos</h1>
+          <p>Acompanhe as compras realizadas com sua conta.</p>
+        </div>
+      </div>
 
       {% if pedidos %}
-      <div class="orders-list">
-        {% for pedido in pedidos %}
-        <div class="order-card">
-          <h2>Pedido #{{ pedido.id }}</h2>
-          <p><strong>Data:</strong> {{ pedido.data_efetuado|date:"d/m/Y H:i" }}</p>
-          <p><strong>Status:</strong> {{ pedido.status }}</p>
+        <div class="orders-list">
+          {% for pedido in pedidos %}
+            <article class="order-card">
+              <header class="order-card-header">
+                <div class="order-main-info">
+                  <span class="order-id">Pedido #{{ pedido.id }}</span>
+                  <span class="order-date">
+                    Realizado em {{ pedido.data_efetuado|date:"d/m/Y H:i" }}
+                  </span>
+                </div>
 
-          <div class="order-items">
-            {% for item in pedido.pedidoproduto_set.all %}
-            <div class="order-item">
-              <img src="{{ item.produto.imagem.url|default:'/static/img/sem-imagem.png' }}"
-                alt="{{ item.produto.nome }}">
-              <div>
-                <p>{{ item.produto.nome }}</p>
-                <small>{{ item.quantidade }}x R$ {{ item.preco_unitario|floatformat:2 }}</small>
-              </div>
-              <strong>R$ {{ item.subtotal|floatformat:2 }}</strong>
-            </div>
-            {% endfor %}
-          </div>
+                {# badge de status sem usar set #}
+                {% with status=pedido.status|lower %}
+                  <span class="order-status-badge
+                    {% if 'pago' in status %} status-pago{% endif %}
+                    {% if 'pendente' in status %} status-pendente{% endif %}
+                    {% if 'enviado' in status or 'entregue' in status %} status-enviado{% endif %}
+                    {% if 'cancel' in status %} status-cancelado{% endif %}
+                  ">
+                    ● {{ pedido.status }}
+                  </span>
+                {% endwith %}
 
-          <hr>
-          <p><strong>Total:</strong> R$ {{ pedido.total|floatformat:2 }}</p>
+                <div class="order-total-pill">
+                  <span>Total</span>
+                  <span>R$ {{ pedido.total|floatformat:2 }}</span>
+                </div>
+              </header>
+
+              <section class="order-card-body">
+                <div class="order-items">
+                  {% for item in pedido.itens.all %}
+                    <div class="order-item">
+                      {% if item.produto.imagem %}
+                        <img src="{{ item.produto.imagem.url }}" alt="{{ item.produto.nome }}">
+                      {% else %}
+                        <img src="{% static 'img/sem-imagem.png' %}" alt="{{ item.produto.nome }}">
+                      {% endif %}
+
+                      <div class="order-item-info">
+                        <span class="order-item-name">{{ item.produto.nome }}</span>
+                        <span class="order-item-extra">
+                          {{ item.quantidade }}x R$ {{ item.preco_unitario|floatformat:2 }}
+                        </span>
+                      </div>
+
+                      <span class="order-item-subtotal">
+                        R$ {{ item.subtotal|floatformat:2 }}
+                      </span>
+                    </div>
+                  {% endfor %}
+                </div>
+              </section>
+
+              <footer class="order-card-footer">
+                <div class="order-address">
+                  {% if pedido.endereco %}
+                    <strong>Entrega:</strong>
+                    {{ pedido.endereco.rua }}, {{ pedido.endereco.numero }}
+                    {% if pedido.endereco.complemento %}- {{ pedido.endereco.complemento }}{% endif %},
+                    {{ pedido.endereco.bairro }} - {{ pedido.endereco.cidade }}/{{ pedido.endereco.estado }}
+                  {% else %}
+                    Endereço não disponível.
+                  {% endif %}
+                </div>
+
+                <div class="order-footer-actions">
+                  <a href="{% url 'home' %}" class="btn-outline">
+                    Comprar novamente
+                  </a>
+                  <a href="{% url 'home' %}" class="btn-fill">
+                    Ver produtos
+                  </a>
+                </div>
+              </footer>
+            </article>
+          {% endfor %}
         </div>
-        {% endfor %}
-      </div>
       {% else %}
-      <div class="orders-empty">
-        <h2>Você ainda não fez nenhum pedido 😕</h2>
-        <a href="{% url 'home' %}" class="btn-back">Explorar Produtos</a>
-      </div>
+        <div class="orders-empty">
+          <h2>Você ainda não fez nenhum pedido 😕</h2>
+          <p>Assim que você realizar uma compra, seus pedidos aparecerão aqui.</p>
+          <a href="{% url 'home' %}" class="btn-back">
+            Explorar produtos
+          </a>
+        </div>
       {% endif %}
     </main>
 
@@ -205,5 +428,4 @@
 
   <script src="{% static 'js/main.js' %}"></script>
 </body>
-
 </html>

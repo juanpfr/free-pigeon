@@ -109,12 +109,12 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    return redirect('/')
 
 
 def google_login_redirect(request):
     if not request.user.is_authenticated:
-        return redirect('login')
+        return redirect('/')
 
     email = request.user.email
     nome = (
@@ -533,14 +533,23 @@ def ver_carrinho(request):
     if not usuario_id:
         return redirect('login')
 
-    usuario = Usuario.objects.get(id=usuario_id)
-    carrinho, created = Carrinho.objects.get_or_create(usuario=usuario)
-    itens = CarrinhoProduto.objects.filter(carrinho=carrinho)
-    total = sum(item.subtotal() for item in itens)
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    carrinho, _ = Carrinho.objects.get_or_create(usuario=usuario)
+
+    itens = carrinho.itens.select_related('produto', 'produto__categoria')
+
+    subtotal = sum(item.subtotal() for item in itens) if itens else Decimal('0.00')
+    total_itens = sum(item.quantidade for item in itens) if itens else 0
+    frete = Decimal('0.00')  # calculado no checkout
+    total = subtotal + frete
+
     return render(request, 'cart.html', {
         'itens': itens,
+        'subtotal': subtotal,
+        'total_itens': total_itens,
+        'frete': frete,
         'total': total,
-        'usuario_nome': usuario.nome
+        'usuario_nome': usuario.nome,
     })
 
 
@@ -687,9 +696,10 @@ def checkout_page(request):
 
 
 #@login_required
+
 @require_POST
 def create_checkout_session(request):
-    """Cria uma Checkout Session no Stripe com suporte a PIX e endereços do usuário."""
+    """Cria uma Checkout Session no Stripe com suporte a PIX, frete e endereços do usuário."""
     try:
         usuario_id = request.session.get('usuario_id')
 
@@ -709,6 +719,10 @@ def create_checkout_session(request):
         metodo_pagamento = request.POST.get('pagamento', 'cartao')
         endereco_id = request.POST.get('endereco_id')  # pode vir vazio ou ser um ID
 
+        # 🔹 NOVO: frete vindo do checkout.html
+        frete_codigo = (request.POST.get('frete_codigo') or '').strip()  # ex: "PAC"
+        frete_valor_str = (request.POST.get('frete_valor') or '').strip()  # ex: "24.9" ou "24.90"
+
         # Converter número para int de forma segura
         try:
             numero_int = int(numero) if numero else 0
@@ -722,7 +736,7 @@ def create_checkout_session(request):
             # Usuário escolheu um endereço salvo
             endereco = Endereco.objects.filter(id=endereco_id, usuario=usuario).first()
             if endereco:
-                # Se quiser, pode atualizar com o que veio do form
+                # Atualiza com o que veio do form, se quiser manter sempre em dia
                 endereco.cep = cep
                 endereco.rua = rua
                 endereco.numero = numero_int
@@ -743,7 +757,7 @@ def create_checkout_session(request):
                 cidade=cidade,
                 estado=estado,
                 complemento=complemento or None,
-                principal=False if usuario.enderecos.exists() else True,  # se for o primeiro, já marca principal
+                principal=False if usuario.enderecos.exists() else True,
             )
 
         # Buscar itens do carrinho
@@ -753,7 +767,7 @@ def create_checkout_session(request):
         if not itens:
             return JsonResponse({'error': 'Carrinho vazio'}, status=400)
 
-        # Criar line_items
+        # Criar line_items (produtos)
         line_items = []
         for item in itens:
             preco_centavos = int(float(item.produto.preco_final()) * 100)
@@ -769,6 +783,29 @@ def create_checkout_session(request):
                     'unit_amount': preco_centavos,
                 },
                 'quantity': item.quantidade,
+            })
+
+        # 🔹 NOVO: adicionar o FRETE como mais um line_item (se tiver sido calculado)
+        frete_centavos = 0
+        if frete_valor_str:
+            try:
+                # troca vírgula por ponto se vier assim: "24,90"
+                frete_decimal = Decimal(frete_valor_str.replace(',', '.'))
+                if frete_decimal > 0:
+                    frete_centavos = int(frete_decimal * 100)
+            except (ValueError, ArithmeticError):
+                frete_centavos = 0
+
+        if frete_centavos > 0:
+            line_items.append({
+                'price_data': {
+                    'currency': 'brl',
+                    'product_data': {
+                        'name': f"Frete {frete_codigo or ''}".strip() or "Frete",
+                    },
+                    'unit_amount': frete_centavos,
+                },
+                'quantity': 1,
             })
 
         # Definir métodos de pagamento baseado na escolha
@@ -799,6 +836,9 @@ def create_checkout_session(request):
                 'estado': estado,
                 'complemento': complemento,
                 'endereco_id': str(endereco.id) if endereco else '',
+                # 🔹 manter o frete salvo na sessão para uso no Pedido / debug
+                'frete_codigo': frete_codigo,
+                'frete_valor': frete_valor_str,
             },
         )
 
@@ -1033,3 +1073,9 @@ def calcular_frete(request):
         opcoes = _frete_simulado(peso_total, cep_destino)
 
     return JsonResponse({'success': True, 'opcoes': opcoes})
+
+@csrf_exempt
+def stripe_webhook(request):
+    # Por enquanto só responde 200 pra não quebrar nada.
+    # Depois a gente coloca a lógica do Stripe aqui.
+    return HttpResponse(status=200)

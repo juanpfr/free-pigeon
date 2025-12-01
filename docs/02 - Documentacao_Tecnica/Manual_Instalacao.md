@@ -1,7 +1,7 @@
 # ⚙️ Manual de Instalação – Free Pigeon
 
 ## Pré-requisitos
-- Python 3.10+
+- Python 3.10 até 3.12
 - PostgreSQL
 
 ## 1️⃣ Clonar o repositório

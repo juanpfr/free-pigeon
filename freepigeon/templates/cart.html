@@ -15,71 +15,172 @@
     {% include 'partials/header.html' %}
 
     <main class="cart-main">
-      <h1>Seu Carrinho</h1>
-
       {% if itens %}
-      <div class="cart-container">
-        <div class="cart-items">
-          {% for item in itens %}
-          <div class="cart-item">
-            <img src="{{ item.produto.imagem.url|default:'/static/img/sem-imagem.png' }}" alt="{{ item.produto.nome }}">
+      <div class="cart-wrapper">
 
-            <div class="cart-item-details">
-              <h2>
-                <a href="{% url 'produto' item.produto.id %}">
-                  {{ item.produto.nome }}
-                </a>
-              </h2>
-              <p class="categoriaNome">Categoria: {{ item.produto.categoria.nome }}</p>
+        <!-- Coluna principal: itens -->
+        <section class="cart-box">
+          <header class="cart-box-header">
+            <div>
+              <h1>Seu carrinho</h1>
+              <p class="cart-subtitle">
+                {{ total_itens }} item{{ total_itens|pluralize }} no carrinho
+              </p>
+            </div>
+            <a href="{% url 'home' %}" class="cart-link-light">Continuar comprando</a>
+          </header>
 
-              {% if item.produto.tamanho %}
-              <p>Tamanho: {{ item.produto.tamanho }}</p>
-              {% endif %}
-              {% if item.produto.tensao %}
-              <p>Tensão: {{ item.produto.tensao }}</p>
-              {% endif %}
-              {% if item.produto.comprimento %}
-              <p>Comprimento: {{ item.produto.comprimento }} cm</p>
-              {% endif %}
+          <!-- Cabeçalho tipo tabela -->
+          <div class="cart-items-header">
+            <span class="col-produto">Produto</span>
+            <span class="col-preco">Preço</span>
+            <span class="col-qtd">Quantidade</span>
+            <span class="col-subtotal">Subtotal</span>
+          </div>
 
-              <div class="price-qty">
-                <span class="unit-price">
-                  {% if item.produto.desconto %}
-                  <del>R$ {{ item.produto.valor|floatformat:2 }}</del>
-                  <strong>R$ {{ item.produto.preco_final|floatformat:2 }}</strong>
+          <div class="cart-items-list">
+            {% for item in itens %}
+            <article class="cart-item-row">
+              <!-- Produto + imagem -->
+              <div class="cart-item-product">
+                <div class="cart-item-thumb">
+                  {% if item.produto.imagem %}
+                  <img src="{{ item.produto.imagem.url }}" alt="{{ item.produto.nome }}">
                   {% else %}
-                  <strong>R$ {{ item.produto.valor|floatformat:2 }}</strong>
+                  <img src="{% static 'img/sem-imagem.png' %}" alt="{{ item.produto.nome }}">
                   {% endif %}
-                </span>
+                </div>
+
+                <div class="cart-item-info">
+                  <h2 class="cart-item-title">
+                    <a href="{% url 'produto' item.produto.id %}">
+                      {{ item.produto.nome }}
+                    </a>
+                  </h2>
+
+                  <p class="cart-item-meta">
+                    Categoria: {{ item.produto.categoria.nome }}
+                  </p>
+
+                  <div class="cart-item-extra">
+                    {% if item.produto.tamanho %}
+                    <span>Tamanho: {{ item.produto.tamanho }}</span>
+                    {% endif %}
+                    {% if item.produto.tensao %}
+                    <span>Tensão: {{ item.produto.tensao }}</span>
+                    {% endif %}
+                    {% if item.produto.comprimento %}
+                    <span>Comprimento: {{ item.produto.comprimento }} cm</span>
+                    {% endif %}
+                  </div>
+
+                  <button class="cart-link-danger"
+                    onclick="if(confirm('Você deseja mesmo remover este item do carrinho?')) { this.closest('form').submit(); }"
+                    type="button">
+                    Remover
+                  </button>
+                  <form action="{% url 'remover_do_carrinho' item.produto.id %}" method="post" style="display:none;">
+                    {% csrf_token %}
+                  </form>
+                </div>
               </div>
 
-              <form action="{% url 'remover_do_carrinho' item.produto.id %}" method="post" class="remove-form">
-                {% csrf_token %}
-                <button type="submit" class="remove-btn">Remover</button>
-              </form>
-            </div>
+              <!-- Preço unitário -->
+              <div class="cart-item-price">
+                {% if item.produto.desconto %}
+                <div class="price-with-discount">
+                  <span class="old-price">R$ {{ item.produto.valor|floatformat:2 }}</span>
+                  <span class="new-price">R$ {{ item.produto.preco_final|floatformat:2 }}</span>
+                  <span class="discount-pill">
+                    -{{ item.produto.desconto|floatformat:0 }}%
+                  </span>
+                </div>
+                {% else %}
+                <span class="new-price">
+                  R$ {{ item.produto.valor|floatformat:2 }}
+                </span>
+                {% endif %}
+              </div>
 
-            <div class="cart-item-total">
-              <strong>Total: R$ {{ item.subtotal|floatformat:2 }}</strong>
-            </div>
+              <!-- Quantidade -->
+              <div class="cart-item-qty">
+                <div class="qty-pill">
+                  {{ item.quantidade }}
+                </div>
+                <small class="qty-note">
+                  Ajustar quantidade pela página do produto
+                </small>
+              </div>
+
+              <!-- Subtotal -->
+              <div class="cart-item-subtotal">
+                <span>Total</span>
+                <strong>R$ {{ item.subtotal|floatformat:2 }}</strong>
+              </div>
+            </article>
+            {% endfor %}
           </div>
-          {% endfor %}
-        </div>
 
+          <div class="cart-bottom-actions">
+            <a href="{% url 'home' %}" class="cart-link-light">
+              ⟵ Escolher mais produtos
+            </a>
+          </div>
+        </section>
+
+        <!-- Coluna lateral: resumo -->
         <aside class="cart-summary">
-          <h2>Resumo do Pedido</h2>
-          <p>Total de Itens: {{ itens|length }}</p>
-          <p><strong>Total: R$ {{ total|floatformat:2 }}</strong></p>
+          <div class="summary-card">
+            <h2>Resumo da compra</h2>
 
+            <div class="summary-row">
+              <span>Itens ({{ total_itens }})</span>
+              <span>R$ {{ subtotal|floatformat:2 }}</span>
+            </div>
 
-          <a href="{% url 'checkout' %}" class="btn-checkout">Finalizar Compra</a>
+            {% if frete and frete > 0 %}
+            <div class="summary-row">
+              <span>Frete</span>
+              <span>R$ {{ frete|floatformat:2 }}</span>
+            </div>
+            {% else %}
+            <div class="summary-row">
+              <span>Frete</span>
+              <span class="summary-info">A calcular no próximo passo</span>
+            </div>
+            {% endif %}
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-row summary-total">
+              <span>Total</span>
+              <span class="summary-total-value">
+                R$ {{ total|floatformat:2 }}
+              </span>
+            </div>
+
+            <a href="{% url 'checkout' %}" class="btn-checkout">
+              Finalizar compra
+            </a>
+
+            <p class="summary-note">
+              Você poderá escolher endereço e calcular o frete na próxima etapa.
+            </p>
+          </div>
         </aside>
       </div>
+
       {% else %}
-      <div class="cart-empty">
-        <h2>Seu carrinho está vazio 🛒</h2>
-        <p>Explore nossos <a href="{% url 'home' %}">produtos</a> e adicione algo!</p>
-      </div>
+      <!-- Carrinho vazio -->
+      <section class="cart-empty">
+        <div class="cart-empty-card">
+          <h2>Seu carrinho está vazio 🛒</h2>
+          <p>Você ainda não adicionou nenhum produto.</p>
+          <a href="{% url 'home' %}" class="btn-empty-cta">
+            Ver produtos
+          </a>
+        </div>
+      </section>
       {% endif %}
     </main>
 

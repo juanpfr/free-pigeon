@@ -11,118 +11,226 @@
             <h3 style="font-size:16px; margin-bottom:1rem;">Endereços cadastrados</h3>
 
             {% if enderecos %}
-                <div style="display:flex; flex-direction:column; gap:.75rem; font-size:14px;">
-                    {% for endereco in enderecos %}
-                        <div style="padding:.75rem 1rem; border-radius:12px; border:1px solid var(--border-gray);">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    {% if endereco.apelido %}
-                                        <strong>{{ endereco.apelido }}</strong>
-                                    {% else %}
-                                        <strong>Endereço {{ forloop.counter }}</strong>
-                                    {% endif %}
-                                    {% if endereco.principal %}
-                                        <span style="font-size:11px; padding:2px 6px; border-radius:999px; background:var(--primary-green); margin-left:.5rem;">
-                                            Principal
-                                        </span>
-                                    {% endif %}
-                                </div>
-                                <div style="display:flex; gap:.5rem;">
-                                    <a href="{% url 'editar_endereco' endereco.id %}" style="font-size:13px; text-decoration:underline;">
-                                        Editar
-                                    </a>
-                                    <form method="post" action="{% url 'excluir_endereco' endereco.id %}">
-                                        {% csrf_token %}
-                                        <button type="submit" style="background:none; border:none; font-size:13px; text-decoration:underline; cursor:pointer;">
-                                            Excluir
-                                        </button>
-                                    </form>
-                                    {% if not endereco.principal %}
-                                        <a href="{% url 'definir_endereco_principal' endereco.id %}" style="font-size:13px; text-decoration:underline;">
-                                            Tornar principal
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <p style="margin-top:.25rem;">
-                                {{ endereco.rua }}, {{ endereco.numero }}
-                                {% if endereco.complemento %}- {{ endereco.complemento }}{% endif %}
-                            </p>
-                            <p style="color:var(--text-gray);">
-                                {{ endereco.bairro }} - {{ endereco.cidade }} / {{ endereco.estado }}<br>
-                                CEP: {{ endereco.cep }}
-                            </p>
+            <div style="display:flex; flex-direction:column; gap:.75rem; font-size:14px;">
+                {% for endereco in enderecos %}
+                <div style="padding:.75rem 1rem; border-radius:12px; border:1px solid var(--border-gray);">
+                    <div
+                        style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+                        <div>
+                            {% if endereco.apelido %}
+                            <strong>{{ endereco.apelido }}</strong>
+                            {% else %}
+                            <strong>Endereço {{ forloop.counter }}</strong>
+                            {% endif %}
+                            {% if endereco.principal %}
+                            <span
+                                style="font-size:11px; padding:2px 6px; border-radius:999px; background:var(--primary-green); margin-left:.5rem;">
+                                Principal
+                            </span>
+                            {% endif %}
                         </div>
-                    {% endfor %}
+                        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+                            <a href="{% url 'editar_endereco' endereco.id %}"
+                                style="font-size:13px; text-decoration:underline;">
+                                Editar
+                            </a>
+
+                            <!-- EXCLUIR COM CONFIRMAÇÃO -->
+                            <form method="post" action="{% url 'excluir_endereco' endereco.id %}"
+                                onsubmit="return confirm('Você realmente deseja excluir este endereço?');">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    style="background:none; border:none; font-size:13px; text-decoration:underline; cursor:pointer;">
+                                    Excluir
+                                </button>
+                            </form>
+
+                            <!-- TORNAR PRINCIPAL COM CONFIRMAÇÃO -->
+                            {% if not endereco.principal %}
+                            <a href="{% url 'definir_endereco_principal' endereco.id %}"
+                                style="font-size:13px; text-decoration:underline;"
+                                onclick="return confirm('Você deseja mesmo tornar este o endereço principal?');">
+                                Tornar principal
+                            </a>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                    <p style="margin-top:.25rem;">
+                        {{ endereco.rua }}, {{ endereco.numero }}
+                        {% if endereco.complemento %}- {{ endereco.complemento }}{% endif %}
+                    </p>
+                    <p style="color:var(--text-gray);">
+                        {{ endereco.bairro }} - {{ endereco.cidade }} / {{ endereco.estado }}<br>
+                        CEP: {{ endereco.cep }}
+                    </p>
                 </div>
+                {% endfor %}
+            </div>
             {% else %}
-                <p style="font-size:14px; color:var(--text-gray);">
-                    Você ainda não tem endereços cadastrados.
-                </p>
+            <p style="font-size:14px; color:var(--text-gray);">
+                Você ainda não tem endereços cadastrados.
+            </p>
             {% endif %}
         </div>
 
         <!-- FORMULÁRIO DE NOVO ENDEREÇO -->
         <form method="post" class="product-card" style="border-radius:20px; margin-top:1.5rem;">
             {% csrf_token %}
-            <h3 style="font-size:16px; margin-bottom:1rem;">Adicionar novo endereço</h3>
+            <h3 style="font-size:16px; margin-bottom:.25rem;">Adicionar novo endereço</h3>
+            <p style="font-size:13px; color:var(--text-gray); margin-bottom:1rem;">
+                Comece informando o CEP. Vamos preencher o que der automaticamente. ✨
+            </p>
 
-            <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem 2rem; font-size:14px;">
-                <div>
-                    <label>Apelido (opcional)</label><br>
-                    <input type="text" name="apelido" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+            <div
+                style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem 2rem; font-size:14px;">
+
+                <!-- CEP PRIMEIRO -->
+                <div style="grid-column:1 / -1;">
+                    <label for="id_cep">CEP *</label><br>
+                    <input type="text" id="id_cep" name="cep" placeholder="00000-000" maxlength="9" inputmode="numeric"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <small style="font-size:12px; color:var(--text-gray);">
+                        Digite o CEP e saia do campo (Tab ou clique fora) para buscar o endereço automaticamente.
+                    </small>
                 </div>
+
                 <div>
-                    <label>Rua *</label><br>
-                    <input type="text" name="rua" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <label for="id_apelido">Apelido (opcional)</label><br>
+                    <input type="text" id="id_apelido" name="apelido" placeholder="Casa, Trabalho..."
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
                 </div>
-                <div>
-                    <label>Número *</label><br>
-                    <input type="number" name="numero" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+
+                <div style="grid-column:1 / -1;">
+                    <label for="id_rua">Rua *</label><br>
+                    <input type="text" id="id_rua" name="rua"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
                 </div>
+
                 <div>
-                    <label>Complemento</label><br>
-                    <input type="text" name="complemento" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <label for="id_numero">Número *</label><br>
+                    <input type="text" id="id_numero" name="numero"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
                 </div>
+
                 <div>
-                    <label>Bairro *</label><br>
-                    <input type="text" name="bairro" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <label for="id_complemento">Complemento</label><br>
+                    <input type="text" id="id_complemento" name="complemento" placeholder="Apto, bloco, referência..."
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
                 </div>
+
                 <div>
-                    <label>Cidade *</label><br>
-                    <input type="text" name="cidade" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <label for="id_bairro">Bairro *</label><br>
+                    <input type="text" id="id_bairro" name="bairro"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
                 </div>
+
                 <div>
-                    <label>Estado *</label><br>
-                    <input type="text" name="estado" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <label for="id_cidade">Cidade *</label><br>
+                    <input type="text" id="id_cidade" name="cidade"
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
                 </div>
+
                 <div>
-                    <label>CEP *</label><br>
-                    <input type="text" name="cep" style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray);">
+                    <label for="id_estado">Estado *</label><br>
+                    <input type="text" id="id_estado" name="estado" maxlength="2" placeholder="SP, RJ..."
+                        style="width:100%; padding:.6rem; border-radius:8px; border:1px solid var(--border-gray); text-transform:uppercase;">
                 </div>
             </div>
 
             <div style="margin-top:1rem;">
-                <label style="font-size:13px;">
+                <label style="font-size:13px; display:flex; align-items:center; gap:.4rem;">
                     <input type="checkbox" name="principal" value="1">
                     Definir como endereço principal
                 </label>
             </div>
 
-            <div style="margin-top: 1.5rem; display:flex; gap:1rem;">
+            <div style="margin-top: 1.5rem; display:flex; gap:1rem; flex-wrap:wrap;">
                 <button type="submit" style="
                     padding:.7rem 1.4rem;
                     border-radius:8px;
                     background:var(--primary-green);
                     font-weight:500;
-                    ">
+                    border:none;
+                    cursor:pointer;
+                ">
                     Salvar endereço
                 </button>
-                <a href="{% url 'perfil' %}" style="padding:.7rem 1.4rem; border-radius:8px; border:1px solid var(--border-gray); text-decoration:none;">
+                <a href="{% url 'perfil' %}" style="
+                    padding:.7rem 1.4rem;
+                    border-radius:8px;
+                    border:1px solid var(--border-gray);
+                    text-decoration:none;
+                    font-size:14px;
+                    display:inline-flex;
+                    align-items:center;
+                    justify-content:center;
+                ">
                     Voltar ao perfil
                 </a>
             </div>
         </form>
     </section>
 </main>
+
+<!-- JS de auto-preenchimento de CEP (ViaCEP) -->
+<script>
+    (function () {
+        const cepInput = document.getElementById('id_cep');
+        if (!cepInput) return;
+
+        function limparEndereco() {
+            const campos = ['id_rua', 'id_bairro', 'id_cidade', 'id_estado'];
+            campos.forEach(function (id) {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+
+        async function buscarCEP(cep) {
+            const apenasDigitos = (cep || '').replace(/\D/g, '');
+            if (apenasDigitos.length !== 8) {
+                return;
+            }
+
+            try {
+                const resp = await fetch('https://viacep.com.br/ws/' + apenasDigitos + '/json/');
+                if (!resp.ok) return;
+
+                const data = await resp.json();
+                if (data.erro) {
+                    return;
+                }
+
+                const rua = document.getElementById('id_rua');
+                const bairro = document.getElementById('id_bairro');
+                const cidade = document.getElementById('id_cidade');
+                const estado = document.getElementById('id_estado');
+
+                if (rua && !rua.value) rua.value = data.logradouro || '';
+                if (bairro && !bairro.value) bairro.value = data.bairro || '';
+                if (cidade && !cidade.value) cidade.value = data.localidade || '';
+                if (estado && !estado.value) estado.value = data.uf || '';
+            } catch (e) {
+                console.error('Erro ao buscar CEP:', e);
+            }
+        }
+
+        // Máscara simples de CEP enquanto digita
+        cepInput.addEventListener('keyup', function (e) {
+            let v = cepInput.value.replace(/\D/g, '');
+            if (v.length > 8) v = v.slice(0, 8);
+            if (v.length > 5) {
+                v = v.slice(0, 5) + '-' + v.slice(5);
+            }
+            cepInput.value = v;
+        });
+
+        // Quando sair do campo, busca o CEP
+        cepInput.addEventListener('blur', function () {
+            buscarCEP(cepInput.value);
+        });
+    })();
+</script>
+
 {% endblock %}
