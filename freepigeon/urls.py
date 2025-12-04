@@ -16,6 +16,12 @@ urlpatterns = [
     # 🔹 URLs do social_django (onde o botão chama 'social:begin')
     path('oauth/', include('social_django.urls', namespace='social')),
 
+    # planos
+    path('planos/', views.planos, name='planos'),
+    path('planos/checkout/', views.create_plan_checkout_session, name='planos_checkout'),
+    path('planos/sucesso/', views.plan_success, name='planos_sucesso'),
+
+
     # perfil do usuário
     path('perfil/', views.perfil, name='perfil'),
     path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
@@ -27,7 +33,12 @@ urlpatterns = [
     path('perfil/enderecos/<int:endereco_id>/principal/', views.definir_endereco_principal, name='definir_endereco_principal'),
 
     path('vender/', views.vender, name='vender'),
+    
     path('anuncios/', views.anuncios, name='anuncios'),
+    path('anuncios/<int:produto_id>/editar/', views.editar_anuncio, name='editar_anuncio'),
+    path('anuncios/<int:produto_id>/excluir/', views.excluir_anuncio, name='excluir_anuncio'),
+    path('anuncios/<int:produto_id>/status/', views.toggle_status_anuncio, name='toggle_status_anuncio'),
+
     path('resumo/', views.resumo, name='resumo'),
     path('loja/criar/', views.criar_loja, name='criar_loja'),
     path('produto/novo/', views.cadastrar_produto, name='cadastrar_produto'),

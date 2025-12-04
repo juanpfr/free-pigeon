@@ -21,7 +21,13 @@
         <!-- NAVEGAÇÃO PRINCIPAL -->
         <nav class="main-nav">
             <a href="{% url 'home' %}">Início</a>
+
+            {% if usuario_nome %}
+            <a href="{% url 'vender' %}">Vender</a>
+            {% else %}
             <a href="{% url 'auth' %}">Vender</a>
+            {% endif %}
+
             <a href="#">Contato</a>
 
             {% if usuario_nome %}
@@ -38,6 +44,7 @@
                     <li><a href="{% url 'vender' %}">Vender</a></li>
                     <li><a href="{% url 'anuncios' %}">Anúncios</a></li>
                     <li><a href="{% url 'resumo' %}">Resumo</a></li>
+                    <li><a href="{% url 'planos' %}">Mudar plano</a></li>
                     <li><a href="{% url 'logout' %}">Sair</a></li>
                 </ul>
             </details>

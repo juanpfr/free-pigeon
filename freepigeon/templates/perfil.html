@@ -115,6 +115,70 @@
                     </div>
                 </div>
 
+                <!-- MEU PLANO -->
+                <div class="product-card" style="border-radius: 20px;">
+                    <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="font-size: 18px; color: var(--text-gray-dark);">
+                            Meu plano
+                        </h3>
+                        <a href="{% url 'planos' %}" style="font-size: 13px; text-decoration: underline;">
+                            Mudar plano
+                        </a>
+                    </div>
+
+                    {% if usuario.plano %}
+                        <p style="font-size: 14px; color: var(--text-gray-dark); margin-bottom: .25rem;">
+                            Plano atual:
+                            <strong>{{ usuario.plano.nome }}</strong>
+                        </p>
+
+                        <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .25rem;">
+                            {% if usuario.plano.preco_mensal > 0 %}
+                                Valor: <strong>R$ {{ usuario.plano.preco_mensal }}</strong>/mês
+                            {% else %}
+                                Valor: <strong>Grátis</strong>
+                            {% endif %}
+                        </p>
+
+                        <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .25rem;">
+                            {% if usuario.plano.limite_anuncios %}
+                                Limite de anúncios: <strong>{{ usuario.plano.limite_anuncios }}</strong>
+                                {% if anuncios_ativos %}
+                                    &nbsp;•&nbsp; Em uso: <strong>{{ anuncios_ativos }}</strong>
+                                {% endif %}
+                            {% else %}
+                                Limite de anúncios: <strong>Ilimitado</strong>
+                            {% endif %}
+                        </p>
+
+                        {% if usuario.plano.descricao %}
+                            <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
+                                {{ usuario.plano.descricao }}
+                            </p>
+                        {% endif %}
+                    {% else %}
+                        <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .5rem;">
+                            Você está no plano gratuito padrão. Acesse a página de planos para conhecer opções com mais
+                            benefícios e limites maiores de anúncios.
+                        </p>
+                    {% endif %}
+
+                    <div style="margin-top: 1.4rem;">
+                        <a href="{% url 'planos' %}" style="
+                                display:inline-block;
+                                padding: .7rem 1.4rem;
+                                border-radius: 8px;
+                                background-color: var(--primary-green);
+                                color: var(--bg-white);
+                                font-size: 14px;
+                                font-weight: 500;
+                                text-decoration:none;
+                                ">
+                            Ver planos disponíveis
+                        </a>
+                    </div>
+                </div>
+
                 <!-- ENDEREÇOS -->
                 <div class="product-card" style="border-radius: 20px;">
                     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">

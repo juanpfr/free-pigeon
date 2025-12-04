@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Planos - Free Pigeon</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Escolha o plano ideal para vender no Free Pigeon.">
+    <script src="https://js.stripe.com/v3/"></script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/planos.css' %}">
+</head>
+<body>
+    {% include 'partials/header.html' %}
+
+    <main class="planos-main">
+        <h1>Escolha ou altere seu plano</h1>
+        <p>
+            Plano atual:
+            <strong>{{ usuario.plano.nome|default:"Pombo Start (Grátis)" }}</strong>
+        </p>
+
+        <div class="planos-grid">
+            {% for plano in planos %}
+            <div class="plano-card">
+                <h2>{{ plano.nome }}</h2>
+
+                <p class="preco">
+                    {% if plano.preco_mensal > 0 %}
+                        R$ {{ plano.preco_mensal }} / mês
+                    {% else %}
+                        Grátis
+                    {% endif %}
+                </p>
+
+                {% if plano.descricao %}
+                    <p class="descricao">{{ plano.descricao }}</p>
+                {% else %}
+                    <p class="descricao">Plano para vender seus produtos no Free Pigeon.</p>
+                {% endif %}
+
+                {% if plano.limite_anuncios %}
+                    <p>Limite: {{ plano.limite_anuncios }} anúncios ativos</p>
+                {% else %}
+                    <p>Limite: anúncios ilimitados</p>
+                {% endif %}
+
+                {% if usuario.plano and usuario.plano.id == plano.id %}
+                    <button disabled>Plano atual</button>
+                {% else %}
+                    <button
+                        type="button"
+                        class="btn-mudar-plano"
+                        data-slug="{{ plano.slug }}">
+                        Escolher este plano
+                    </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <p class="help-text">
+            Os planos pagos serão cobrados via Stripe. Você poderá alterar de plano a qualquer momento.
+        </p>
+
+        <!-- Form escondido apenas para gerar o CSRF token pro JS -->
+        <form id="csrf-form" style="display:none;">
+            {% csrf_token %}
+        </form>
+    </main>
+    {% include 'partials/footer.html' %}
+    <script>
+        const stripe = Stripe("{{ stripe_public_key }}");
+
+        function getCsrfToken() {
+            const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+            return input ? input.value : '';
+        }
+
+        document.querySelectorAll('.btn-mudar-plano').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const slug = btn.dataset.slug;
+                const csrfToken = getCsrfToken();
+
+                try {
+                    const resp = await fetch("{% url 'planos_checkout' %}", {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({ plano_slug: slug })
+                    });
+
+                    const data = await resp.json();
+
+                    // Plano free: troca direto sem Stripe
+                    if (data.free) {
+                        window.location.reload();
+                        return;
+                    }
+
+                    if (data.sessionId) {
+                        const result = await stripe.redirectToCheckout({
+                            sessionId: data.sessionId
+                        });
+                        if (result.error) {
+                            alert(result.error.message);
+                        }
+                    } else if (data.error) {
+                        alert(data.error);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Ocorreu um erro ao mudar de plano. Tente novamente.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

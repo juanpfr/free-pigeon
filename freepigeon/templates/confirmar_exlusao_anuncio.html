@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main>
+    <section class="product-section">
+        <div class="product-card" style="max-width: 600px; margin: 0 auto; border-radius: 20px;">
+            <h2 style="margin-bottom:.5rem;">Excluir anúncio</h2>
+            <p style="font-size:14px; color:var(--text-gray); margin-bottom:1rem;">
+                Tem certeza de que deseja excluir o anúncio abaixo? Essa ação não pode ser desfeita.
+            </p>
+
+            <div style="display:flex; gap:1rem; align-items:flex-start; margin-bottom:1.2rem;">
+                {% if produto.imagem %}
+                    <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}"
+                         style="width:120px; height:auto; border-radius:10px; object-fit:cover;">
+                {% endif %}
+                <div>
+                    <p style="font-size:15px; font-weight:600; color:var(--text-gray-dark); margin-bottom:.2rem;">
+                        {{ produto.nome }}
+                    </p>
+                    <p style="font-size:13px; color:var(--text-gray); margin-bottom:.1rem;">
+                        ID #{{ produto.id }} • Estoque: {{ produto.q_estoque }}
+                    </p>
+                    <p style="font-size:13px; color:var(--primary-blue);">
+                        Preço atual:
+                        {% if produto.desconto %}
+                            R$ {{ produto.preco_final }} (com desconto)
+                        {% else %}
+                            R$ {{ produto.valor }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+
+            <form method="post" style="margin-top:1rem; display:flex; gap:.75rem; flex-wrap:wrap;">
+                {% csrf_token %}
+                <button type="submit" style="
+                    padding: .8rem 1.6rem;
+                    border-radius: 999px;
+                    border:1px solid #fecaca;
+                    background-color:#fef2f2;
+                    color:#b91c1c;
+                    font-size:14px;
+                    font-weight:500;
+                    cursor:pointer;
+                ">
+                    Sim, excluir definitivamente
+                </button>
+
+                <a href="{% url 'anuncios' %}" style="
+                    padding: .8rem 1.4rem;
+                    border-radius: 999px;
+                    border:1px solid var(--border-gray);
+                    font-size:13px;
+                    text-decoration:none;
+                ">
+                    Cancelar
+                </a>
+            </form>
+        </div>
+    </section>
+</main>
+{% endblock %}

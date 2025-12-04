@@ -1,0 +1,218 @@
+/* ================================
+   Página de Planos - Free Pigeon
+   ================================ */
+
+/* Layout base da página de planos */
+.planos-main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 7rem 1.5rem 4rem; /* espaço pro header fixo, se tiver */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #0f172a;
+}
+
+/* Título e subtítulo */
+.planos-main h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+    color: #020617;
+}
+
+.planos-main > p {
+    margin-bottom: 2.5rem;
+    font-size: 0.95rem;
+    color: #64748b;
+}
+
+/* Grid dos planos */
+.planos-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+    .planos-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .planos-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .planos-main {
+        padding-top: 6rem;
+    }
+
+    .planos-main h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Card de plano */
+.plano-card {
+    position: relative;
+    background: #ffffff;
+    border-radius: 1.2rem;
+    padding: 1.8rem 1.6rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+    overflow: hidden;
+}
+
+/* Hover bonito */
+.plano-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.12);
+    border-color: #0ea5e9;
+}
+
+/* Título do plano */
+.plano-card h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+}
+
+/* Preço */
+.plano-card .preco {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #0ea5e9;
+    margin: 0.25rem 0 0.5rem;
+}
+
+/* Descrição e textos menores */
+.plano-card .descricao {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+}
+
+.plano-card p {
+    margin: 0;
+}
+
+.plano-card p:nth-of-type(3) {
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+/* Botões gerais */
+.plano-card button {
+    margin-top: 1.1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    transition:
+        background 0.18s ease,
+        color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.1s ease;
+}
+
+/* Botão de mudar plano (ativo) */
+.plano-card .btn-mudar-plano {
+    background: linear-gradient(135deg, #0ea5e9, #22c55e);
+    color: #ffffff;
+    box-shadow: 0 10px 25px rgba(14, 165, 233, 0.45);
+}
+
+.plano-card .btn-mudar-plano:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(14, 165, 233, 0.5);
+}
+
+.plano-card .btn-mudar-plano:active {
+    transform: translateY(0);
+    box-shadow: 0 8px 18px rgba(14, 165, 233, 0.4);
+}
+
+/* Botão desabilitado (plano atual) */
+.plano-card button[disabled] {
+    background: #e2e8f0;
+    color: #475569;
+    cursor: default;
+    box-shadow: none;
+}
+
+/* Destaque visual pro card do plano atual (navegadores modernos) */
+.plano-card:has(button[disabled]) {
+    border-color: #22c55e;
+    box-shadow: 0 24px 60px rgba(34, 197, 94, 0.28);
+}
+
+/* Badge "Plano atual" usando o botão desabilitado como âncora */
+.plano-card:has(button[disabled])::before {
+    content: "Seu plano atual";
+    position: absolute;
+    top: 1rem;
+    right: 1.1rem;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+/* Sutil gradiente de fundo atrás do preço */
+.plano-card .preco::before {
+    content: "";
+    position: absolute;
+    inset: 0.7rem 35% auto auto;
+    height: 60px;
+    border-radius: 50%;
+    background: radial-gradient(circle at top right, rgba(14, 165, 233, 0.15), transparent 60%);
+    pointer-events: none;
+}
+
+/* Micro textos / ajuda */
+.planos-main .help-text {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 0.75rem;
+}
+
+/* Ajustes de spacing em telas pequenas */
+@media (max-width: 480px) {
+    .plano-card {
+        padding: 1.5rem 1.2rem;
+    }
+
+    .plano-card h2 {
+        font-size: 1rem;
+    }
+
+    .plano-card .preco {
+        font-size: 1.15rem;
+    }
+
+    .plano-card:has(button[disabled])::before {
+        top: 0.9rem;
+        right: 0.9rem;
+        font-size: 0.65rem;
+    }
+}

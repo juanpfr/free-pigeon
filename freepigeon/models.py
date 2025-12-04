@@ -1,4 +1,6 @@
 from django.db import models
+from decimal import Decimal
+
 
 # =========================
 # TABELA: Loja
@@ -9,6 +11,27 @@ class Loja(models.Model):
     def __str__(self):
         return self.nome
 
+# =========================
+# TABELA: Plano
+# =========================
+class Plano(models.Model):
+    nome = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)  # algo tipo 'start', 'pro', 'turbo'
+    descricao = models.CharField(max_length=255, blank=True, null=True)
+    preco_mensal = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    limite_anuncios = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Número máximo de anúncios ativos. Deixe vazio para ilimitado."
+    )
+    ativo = models.BooleanField(default=True)
+    is_default = models.BooleanField(
+        default=False,
+        help_text="Plano padrão para novos usuários / login Google."
+    )
+
+    def __str__(self):
+        return self.nome
 
 # =========================
 # TABELA: Usuario
@@ -20,6 +43,7 @@ class Usuario(models.Model):
     cpf = models.CharField(max_length=14, unique=True, blank=True, null=True)
     senha = models.CharField(max_length=255)
     loja = models.ForeignKey('Loja', on_delete=models.SET_NULL, null=True, blank=True)
+    plano = models.ForeignKey('Plano', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.nome
@@ -77,10 +101,7 @@ class Produto(models.Model):
     q_estoque = models.IntegerField()
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
 
-    # 🔹 agora é opcional vincular a uma loja
     loja = models.ForeignKey(Loja, on_delete=models.SET_NULL, null=True, blank=True)
-
-    # 🔹 novo: produto pode ser vinculado diretamente ao usuário vendedor
     vendedor = models.ForeignKey(
         Usuario,
         on_delete=models.CASCADE,
@@ -90,6 +111,8 @@ class Produto(models.Model):
     )
 
     imagem = models.ImageField(upload_to='produtos/', blank=True, null=True)
+
+    ativo = models.BooleanField(default=True)
 
     def __str__(self):
         return self.nome

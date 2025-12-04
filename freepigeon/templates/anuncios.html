@@ -2,64 +2,202 @@
 {% load static %}
 
 {% block content %}
+
+<style>
+    /* Você pode mover isso para seu CSS global depois */
+
+    .badge-status {
+        position: absolute;
+        top: .7rem;
+        left: .7rem;
+        padding: .15rem .55rem;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .badge-status-ativo {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-status-inativo {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .btn-status {
+        width: 100%;
+        text-align: center;
+        padding: .45rem .7rem;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .btn-status-ativo {
+        border: 1px solid #f97316;
+        background-color: #fff7ed;
+        color: #9a3412;
+    }
+
+    .btn-status-inativo {
+        border: 1px solid #22c55e;
+        background-color: #f0fdf4;
+        color: #166534;
+    }
+</style>
+
 <main>
     <section class="product-section">
-        <h2>Meus anúncios</h2>
+        <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <h2 style="margin-bottom: .2rem;">Meus anúncios</h2>
+                <p style="font-size: 13px; color: var(--text-gray);">
+                    Gerencie os produtos que você está vendendo no Free Pigeon.
+                </p>
+            </div>
+
+            <a href="{% url 'cadastrar_produto' %}" style="
+                display:inline-flex;
+                align-items: center;
+                gap: .4rem;
+                padding: .6rem 1.2rem;
+                border-radius: 999px;
+                background-color: var(--primary-blue);
+                color: var(--bg-white);
+                font-size: 14px;
+                font-weight: 500;
+                text-decoration: none;
+            ">
+                + Novo anúncio
+            </a>
+        </div>
 
         {% if produtos %}
+            <div style="margin-bottom: 1rem; font-size: 13px; color: var(--text-gray-light);">
+                Você possui <strong>{{ produtos|length }}</strong> anúncio{% if produtos|length != 1 %}s{% endif %} cadastrados.
+            </div>
+
             <div class="product-grid">
                 {% for produto in produtos %}
-                    <div class="product-card small">
-                        {% if produto.imagem %}
-                            <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
-                        {% else %}
-                            <img src="https://via.placeholder.com/300x200?text=Sem+imagem" alt="{{ produto.nome }}">
-                        {% endif %}
+                    <div class="product-card small" style="display:flex; flex-direction: column; border-radius: 18px;">
+                        <!-- IMAGEM -->
+                        <div style="position: relative;">
+                            {% if produto.imagem %}
+                                <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
+                            {% else %}
+                                <img src="https://via.placeholder.com/300x200?text=Sem+imagem" alt="{{ produto.nome }}">
+                            {% endif %}
 
-                        <div class="product-info">
-                            <span style="display: block; font-size: 14px; font-weight: 600; color: var(--text-gray-dark); margin-bottom: .3rem;">
+                            <!-- BADGE DE STATUS -->
+                            <span class="badge-status {% if produto.ativo %}badge-status-ativo{% else %}badge-status-inativo{% endif %}">
+                                {% if produto.ativo %}Ativo{% else %}Inativo{% endif %}
+                            </span>
+                        </div>
+
+                        <!-- INFOS DO ANÚNCIO -->
+                        <div class="product-info" style="flex:1; display:flex; flex-direction:column; gap:.25rem; margin-top:.5rem;">
+                            <span style="display: block; font-size: 14px; font-weight: 600; color: var(--text-gray-dark); margin-bottom: .1rem;">
                                 {{ produto.nome }}
                             </span>
-                            <span style="display: block; font-size: 13px; color: var(--text-gray); margin-bottom: .2rem;">
-                                Estoque: {{ produto.q_estoque }}
+
+                            <span style="display: block; font-size: 12px; color: var(--text-gray-light);">
+                                ID #{{ produto.id }}
+                                {% if produto.loja %}
+                                    • Loja: {{ produto.loja.nome }}
+                                {% else %}
+                                    • Pessoa física
+                                {% endif %}
+                            </span>
+
+                            <span style="display: block; font-size: 13px; color: var(--text-gray); margin-top: .2rem;">
+                                Estoque: <strong>{{ produto.q_estoque }}</strong> unid.
                             </span>
 
                             {% if produto.desconto %}
-                                <span style="display: block; font-size: 13px; color: var(--text-gray-light); text-decoration: line-through;">
-                                    R$ {{ produto.valor }}
-                                </span>
-                                <span style="display: block; font-size: 15px; font-weight: 600; color: var(--primary-blue);">
-                                    R$ {{ produto.preco_final }}
-                                </span>
+                                <div style="margin-top: .3rem;">
+                                    <span style="display: block; font-size: 12px; color: var(--text-gray-light); text-decoration: line-through;">
+                                        R$ {{ produto.valor }}
+                                    </span>
+                                    <span style="display: block; font-size: 15px; font-weight: 600; color: var(--primary-blue);">
+                                        R$ {{ produto.preco_final }}
+                                        <span style="font-size: 11px; color: var(--text-gray-light); margin-left: .25rem;">
+                                            (-{{ produto.desconto }}%)
+                                        </span>
+                                    </span>
+                                </div>
                             {% else %}
-                                <span style="display: block; font-size: 15px; font-weight: 600; color: var(--primary-blue);">
+                                <span style="display: block; font-size: 15px; font-weight: 600; color: var(--primary-blue); margin-top:.3rem;">
                                     R$ {{ produto.valor }}
                                 </span>
                             {% endif %}
                         </div>
 
-                        <div style="margin-top: 1rem; display: flex; gap: .5rem; flex-wrap: wrap;">
+                        <!-- AÇÕES -->
+                        <div style="margin-top: .9rem; display: flex; gap: .4rem; flex-wrap: wrap;">
+                            <!-- Ver anúncio -->
                             <a href="{% url 'produto' produto.id %}" style="
-                                    flex: 1;
+                                    flex: 1 1 45%;
                                     text-align: center;
                                     padding: .5rem .7rem;
-                                    border-radius: 6px;
+                                    border-radius: 999px;
                                     border: 1px solid var(--border-gray);
                                     font-size: 13px;
-                                    ">
+                                    text-decoration:none;
+                                ">
                                 Ver anúncio
                             </a>
-                            <a href="#" style="
-                                    flex: 1;
+
+                            <!-- Editar anúncio -->
+                            <a href="{% url 'editar_anuncio' produto.id %}"
+                               class="btn-confirm"
+                               data-confirm="Deseja editar o anúncio '{{ produto.nome }}'?"
+                               style="
+                                    flex: 1 1 45%;
                                     text-align: center;
                                     padding: .5rem .7rem;
-                                    border-radius: 6px;
+                                    border-radius: 999px;
+                                    border: none;
                                     background-color: var(--primary-blue);
                                     color: var(--bg-white);
                                     font-size: 13px;
                                     font-weight: 500;
-                                    ">
+                                    text-decoration:none;
+                                ">
                                 Editar
+                            </a>
+
+                            <!-- Ativar / Desativar -->
+                            <form method="post"
+                                  action="{% url 'toggle_status_anuncio' produto.id %}"
+                                  style="flex: 1 1 45%; margin:0;">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="btn-confirm btn-status {% if produto.ativo %}btn-status-ativo{% else %}btn-status-inativo{% endif %}"
+                                    data-confirm="Tem certeza que deseja {% if produto.ativo %}desativar{% else %}ativar{% endif %} o anúncio '{{ produto.nome }}'?">
+                                    {% if produto.ativo %}Desativar{% else %}Ativar{% endif %}
+                                </button>
+                            </form>
+
+                            <!-- Excluir -->
+                            <a href="{% url 'excluir_anuncio' produto.id %}"
+                               class="btn-confirm"
+                               data-confirm="Tem certeza que deseja excluir o anúncio '{{ produto.nome }}'? Essa ação não pode ser desfeita."
+                               style="
+                                    flex: 1 1 45%;
+                                    text-align: center;
+                                    padding: .45rem .7rem;
+                                    border-radius: 999px;
+                                    border: 1px solid #fecaca;
+                                    background-color: #fef2f2;
+                                    color: #b91c1c;
+                                    font-size: 12px;
+                                    font-weight: 500;
+                                    text-decoration:none;
+                                ">
+                                Excluir
                             </a>
                         </div>
                     </div>
@@ -78,6 +216,7 @@
                     color: var(--bg-white);
                     font-size: 14px;
                     font-weight: 500;
+                    text-decoration:none;
                     ">
                     Começar a vender
                 </a>
@@ -85,4 +224,17 @@
         {% endif %}
     </section>
 </main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.btn-confirm[data-confirm]').forEach(function (el) {
+            el.addEventListener('click', function (e) {
+                const msg = el.getAttribute('data-confirm') || 'Tem certeza que deseja continuar?';
+                if (!confirm(msg)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -4,82 +4,158 @@
 {% block content %}
 <main>
     <section class="product-section">
-        <h2>Resumo das vendas</h2>
+        <div style="display:flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+                <h2 style="margin-bottom: .2rem;">Resumo das vendas</h2>
+                <p style="font-size: 13px; color: var(--text-gray);">
+                    Visão geral dos seus pedidos e faturamento.
+                </p>
+            </div>
+
+            <div style="font-size: 12px; color: var(--text-gray-light);">
+                <span style="padding: .2rem .6rem; border-radius: 999px; background: var(--bg-light); border: 1px solid var(--border-gray);">
+                    Última atualização: agora
+                </span>
+            </div>
+        </div>
 
         <!-- CARDS DE RESUMO -->
         <div style="
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 2rem;
-            ">
+            margin-bottom: 2.2rem;
+        ">
 
-            <div class="product-card" style="border-radius: 20px;">
-                <p style="font-size: 13px; color: var(--text-gray-light);">Pedidos</p>
-                <p style="font-size: 22px; font-weight: 600; color: var(--text-gray-dark);">
-                    {{ total_pedidos|default:"0" }}
-                </p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
-                    Pedidos recebidos até agora.
+            <!-- Total de pedidos -->
+            <div class="product-card" style="border-radius: 20px; padding: 1.25rem 1.4rem;">
+                <div style="display:flex; justify-content: space-between; align-items:center;">
+                    <div>
+                        <p style="font-size: 12px; color: var(--text-gray-light); text-transform: uppercase; letter-spacing: .06em;">
+                            Pedidos
+                        </p>
+                        <p style="font-size: 24px; font-weight: 600; color: var(--text-gray-dark); margin-top: .15rem;">
+                            {{ total_pedidos|default:"0" }}
+                        </p>
+                    </div>
+                    <span style="font-size: 11px; padding: 0.25rem .6rem; border-radius: 999px; background: var(--bg-light); color: var(--text-gray);">
+                        Todos os tempos
+                    </span>
+                </div>
+
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: .6rem;">
+                    Pedidos recebidos até agora na sua conta.
                 </p>
             </div>
 
-            <div class="product-card" style="border-radius: 20px;">
-                <p style="font-size: 13px; color: var(--text-gray-light);">Itens vendidos</p>
-                <p style="font-size: 22px; font-weight: 600; color: var(--text-gray-dark);">
+            <!-- Itens vendidos -->
+            <div class="product-card" style="border-radius: 20px; padding: 1.25rem 1.4rem;">
+                <p style="font-size: 12px; color: var(--text-gray-light); text-transform: uppercase; letter-spacing: .06em;">
+                    Itens vendidos
+                </p>
+                <p style="font-size: 24px; font-weight: 600; color: var(--text-gray-dark); margin-top: .15rem;">
                     {{ total_itens_vendidos|default:"0" }}
                 </p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
-                    Quantidade total de produtos vendidos.
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: .6rem;">
+                    Quantidade total de produtos que saíram em pedidos concluídos.
                 </p>
             </div>
 
-            <div class="product-card" style="border-radius: 20px;">
-                <p style="font-size: 13px; color: var(--text-gray-light);">Faturamento</p>
-                <p style="font-size: 22px; font-weight: 600; color: var(--primary-blue);">
+            <!-- Faturamento total -->
+            <div class="product-card" style="border-radius: 20px; padding: 1.25rem 1.4rem;">
+                <p style="font-size: 12px; color: var(--text-gray-light); text-transform: uppercase; letter-spacing: .06em;">
+                    Faturamento
+                </p>
+                <p style="font-size: 24px; font-weight: 600; color: var(--primary-blue); margin-top: .15rem;">
                     R$ {{ faturamento_total|default:"0,00" }}
                 </p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-top: .5rem;">
-                    Valor total em vendas confirmadas.
+                <p style="font-size: 13px; color: var(--text-gray); margin-top: .6rem;">
+                    Soma de todos os pedidos registrados como pagos.
                 </p>
             </div>
         </div>
 
         <!-- ÚLTIMOS PEDIDOS -->
         <div class="product-card" style="border-radius: 20px;">
-            <h3 style="font-size: 18px; margin-bottom: 1rem;">
-                Últimos pedidos
-            </h3>
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 1rem;">
+                <div>
+                    <h3 style="font-size: 18px; margin-bottom: .15rem;">
+                        Últimos pedidos
+                    </h3>
+                    <p style="font-size: 13px; color: var(--text-gray);">
+                        Visão rápida dos últimos pedidos realizados.
+                    </p>
+                </div>
+                {% if ultimos_pedidos %}
+                    <span style="font-size: 12px; color: var(--text-gray-light);">
+                        Mostrando {{ ultimos_pedidos|length }} pedido(s) mais recentes
+                    </span>
+                {% endif %}
+            </div>
 
             {% if ultimos_pedidos %}
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; min-width: 540px;">
                         <thead>
-                            <tr style="border-bottom: 1px solid var(--border-gray);">
-                                <th style="text-align: left; padding: .6rem;">Pedido</th>
-                                <th style="text-align: left; padding: .6rem;">Data</th>
-                                <th style="text-align: left; padding: .6rem;">Itens</th>
-                                <th style="text-align: left; padding: .6rem;">Total</th>
-                                <th style="text-align: left; padding: .6rem;">Status</th>
+                            <tr style="border-bottom: 1px solid var(--border-gray); background: var(--bg-light);">
+                                <th style="text-align: left; padding: .7rem;">Pedido</th>
+                                <th style="text-align: left; padding: .7rem;">Data</th>
+                                <th style="text-align: left; padding: .7rem;">Itens</th>
+                                <th style="text-align: left; padding: .7rem;">Total</th>
+                                <th style="text-align: left; padding: .7rem;">Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for pedido in ultimos_pedidos %}
-                                <tr style="border-bottom: 1px solid #f0f0f0;">
-                                    <td style="padding: .6rem;">#{{ pedido.id }}</td>
-                                    <td style="padding: .6rem;">{{ pedido.data_efetuado|date:"d/m/Y H:i" }}</td>
-                                    <td style="padding: .6rem;">{{ pedido.itens.count }}</td>
-                                    <td style="padding: .6rem;">R$ {{ pedido.total }}</td>
-                                    <td style="padding: .6rem;">{{ pedido.status }}</td>
+                                <tr style="border-bottom: 1px solid #f3f4f6;">
+                                    <td style="padding: .7rem; white-space: nowrap;">
+                                        #{{ pedido.id }}
+                                    </td>
+                                    <td style="padding: .7rem; white-space: nowrap;">
+                                        {{ pedido.data_efetuado|date:"d/m/Y H:i" }}
+                                    </td>
+                                    <td style="padding: .7rem;">
+                                        {{ pedido.itens.count }} item{% if pedido.itens.count != 1 %}s{% endif %}
+                                    </td>
+                                    <td style="padding: .7rem;">
+                                        R$ {{ pedido.total }}
+                                    </td>
+                                    <td style="padding: .7rem;">
+                                        {% with status_lower=pedido.status|lower %}
+                                            {% if "pago" in status_lower or "concl" in status_lower %}
+                                                <span style="font-size: 12px; padding: .2rem .6rem; border-radius: 999px; background: #dcfce7; color:#166534;">
+                                                    {{ pedido.status }}
+                                                </span>
+                                            {% elif "pend" in status_lower %}
+                                                <span style="font-size: 12px; padding: .2rem .6rem; border-radius: 999px; background: #fef9c3; color:#854d0e;">
+                                                    {{ pedido.status }}
+                                                </span>
+                                            {% elif "cancel" in status_lower %}
+                                                <span style="font-size: 12px; padding: .2rem .6rem; border-radius: 999px; background: #fee2e2; color:#b91c1c;">
+                                                    {{ pedido.status }}
+                                                </span>
+                                            {% else %}
+                                                <span style="font-size: 12px; padding: .2rem .6rem; border-radius: 999px; background: var(--bg-light); color: var(--text-gray-dark);">
+                                                    {{ pedido.status }}
+                                                </span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
             {% else %}
-                <p style="font-size: 14px; color: var(--text-gray);">
-                    Ainda não há pedidos para exibir no resumo.
-                </p>
+                <div style="padding: 1rem 0 0.5rem;">
+                    <p style="font-size: 14px; color: var(--text-gray); margin-bottom: .3rem;">
+                        Ainda não há pedidos para exibir no resumo.
+                    </p>
+                    <p style="font-size: 13px; color: var(--text-gray-light);">
+                        Assim que suas vendas começarem a acontecer, elas aparecerão aqui com detalhes de data,
+                        quantidade de itens, total e status.
+                    </p>
+                </div>
             {% endif %}
         </div>
     </section>

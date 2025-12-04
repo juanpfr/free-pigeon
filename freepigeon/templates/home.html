@@ -39,7 +39,11 @@
     <h2>Ofertas do dia</h2>
     <div class="product-grid">
         {% for produto in produtos %}
+        {% if usuario_nome %}
         <a href="{% url 'produto' produto.id %}" class="product-card-link">
+        {% else %}
+        <a href="{% url 'login' %}" class="product-card-link">
+        {% endif %}
             <div class="product-card small">
                 {% if produto.imagem %}
                 <img src="{{ produto.imagem.url }}" alt="{{ produto.nome }}">
