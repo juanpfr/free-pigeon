@@ -1,0 +1,120 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Planos - Free Pigeon{% endblock %}
+{% block header_title %}Planos de Assinatura{% endblock %}
+
+{% block content %}
+<div class="section-container active">
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Planos cadastrados</h3>
+
+            <a href="{% url 'admin_criar_plano' %}" class="btn-add" style="text-decoration:none;">
+                <p>+</p> Novo Plano
+            </a>
+        </div>
+
+        <table id="plans-table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Slug</th>
+                    <th>Preço Mensal</th>
+                    <th>Limite de Anúncios</th>
+                    <th>Plano Padrão</th>
+                    <th>Ativo</th>
+                    <th>Assinantes</th>
+                    <th style="width:240px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in planos %}
+                <tr>
+                    <td><strong>{{ p.nome }}</strong></td>
+                    <td>{{ p.slug }}</td>
+                    <td>
+                        {% if p.preco_mensal == 0 %}
+                            Grátis
+                        {% else %}
+                            R$ {{ p.preco_mensal|floatformat:2 }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if not p.limite_anuncios or p.limite_anuncios == 0 %}
+                            Ilimitado
+                        {% else %}
+                            {{ p.limite_anuncios }} anúncios
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.is_default %}
+                            <span class="badge badge-success">Sim</span>
+                        {% else %}
+                            <span class="badge badge-neutral">Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.ativo %}
+                            <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.assinantes_count }}</td>
+                    <td>
+                        <div class="action-group">
+                            <!-- Editar -->
+                            <a href="{% url 'admin_editar_plano' p.id %}"
+                               class="action-btn-pill btn-view"
+                               title="Editar plano">
+                                <i data-lucide="edit-2"></i>
+                                <span>Editar</span>
+                            </a>
+
+                            <!-- Ativar / Desativar (não deixa desativar o padrão na view) -->
+                            <form method="post"
+                                  action="{% url 'admin_toggle_plano_ativo' p.id %}">
+                                {% csrf_token %}
+                                {% if p.ativo %}
+                                    <button type="submit"
+                                            class="action-btn-pill btn-toggle-off"
+                                            title="Desativar plano">
+                                        <i data-lucide="pause-circle"></i>
+                                        <span>Desativar</span>
+                                    </button>
+                                {% else %}
+                                    <button type="submit"
+                                            class="action-btn-pill btn-toggle-on"
+                                            title="Ativar plano">
+                                        <i data-lucide="play-circle"></i>
+                                        <span>Ativar</span>
+                                    </button>
+                                {% endif %}
+                            </form>
+
+                            <!-- Excluir (nunca mostra para o plano padrão) -->
+                            {% if not p.is_default %}
+                                <a href="{% url 'admin_excluir_plano' p.id %}"
+                                   class="action-btn-pill btn-delete"
+                                   title="Excluir plano">
+                                    <i data-lucide="trash-2"></i>
+                                    <span>Excluir</span>
+                                </a>
+                            {% else %}
+                                <span class="pill-label-muted">
+                                    Padrão
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">Nenhum plano cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

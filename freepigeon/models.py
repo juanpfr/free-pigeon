@@ -1,5 +1,8 @@
 from django.db import models
 from decimal import Decimal
+from django.contrib.auth.hashers import make_password, check_password
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
 
 
 # =========================
@@ -33,6 +36,7 @@ class Plano(models.Model):
     def __str__(self):
         return self.nome
 
+
 # =========================
 # TABELA: Usuario
 # =========================
@@ -44,6 +48,7 @@ class Usuario(models.Model):
     senha = models.CharField(max_length=255)
     loja = models.ForeignKey('Loja', on_delete=models.SET_NULL, null=True, blank=True)
     plano = models.ForeignKey('Plano', on_delete=models.SET_NULL, null=True, blank=True)
+    ativo = models.BooleanField(default=True)
 
     def __str__(self):
         return self.nome
@@ -201,3 +206,85 @@ class PedidoProduto(models.Model):
 
     def __str__(self):
         return f"{self.produto.nome} (x{self.quantidade})"
+
+
+# =========================
+# TABELA: AdminUser (Admin do painel)
+# =========================
+class AdminUser(models.Model):
+    username = models.CharField(max_length=50, unique=True)
+    password = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.username
+
+    def verify_password(self, raw_password):
+        return check_password(raw_password, self.password)
+
+
+# =========================
+# SIGNALS: criar admin padrão + plano padrão
+# =========================
+
+@receiver(post_migrate)
+def criar_admin_padrao(sender, **kwargs):
+    """
+    Cria automaticamente um administrador padrão:
+    usuário: admin
+    senha: admin
+    """
+    # Troque 'freepigeon' pelo nome do SEU app, se for outro
+    if sender.name != "freepigeon":
+        return
+
+    if not AdminUser.objects.filter(username='admin').exists():
+        AdminUser.objects.create(
+            username='admin',
+            password=make_password('admin')
+        )
+        print("✔ Admin padrão criado: admin / admin")
+
+
+@receiver(post_migrate)
+def garantir_plano_basico(sender, **kwargs):
+    """
+    Garante que sempre exista um plano básico gratuito padrão:
+    - nome: Free Pigeon Basic
+    - slug: free-basic
+    - preco_mensal: 0
+    - limite_anuncios: 5
+    - is_default: True
+    """
+    if sender.name != "freepigeon":
+        return
+
+    # Aqui usamos diretamente a classe Plano, que já está definida acima neste arquivo
+    plano_default = Plano.objects.filter(is_default=True).first()
+
+    if not plano_default:
+        Plano.objects.create(
+            nome="Free Pigeon Basic",
+            slug="free-basic",
+            descricao="Plano gratuito padrão. Até 5 anúncios e sem loja.",
+            preco_mensal=0,
+            limite_anuncios=5,
+            ativo=True,
+            is_default=True,
+        )
+        print("✔ Plano padrão criado: Free Pigeon Basic (gratuito, 5 anúncios)")
+    else:
+        # Garante regras do plano default
+        changed = False
+        if plano_default.preco_mensal != 0:
+            plano_default.preco_mensal = 0
+            changed = True
+        if plano_default.limite_anuncios != 5:
+            plano_default.limite_anuncios = 5
+            changed = True
+        if not plano_default.is_default:
+            plano_default.is_default = True
+            changed = True
+
+        if changed:
+            plano_default.save()
+            print("✔ Plano padrão ajustado para grátis com limite de 5 anúncios.")

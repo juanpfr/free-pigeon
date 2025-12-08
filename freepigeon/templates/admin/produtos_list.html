@@ -1,0 +1,132 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Produtos - Free Pigeon{% endblock %}
+{% block header_title %}Todos os Produtos{% endblock %}
+
+{% block content %}
+<div class="section-container active">
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Produtos cadastrados</h3>
+
+            <!-- Filtros (GET) -->
+            <form method="get" style="display:flex; gap:8px; align-items:center;">
+                <input type="text"
+                       name="q"
+                       class="search-input"
+                       placeholder="Buscar por nome, vendedor ou loja..."
+                       value="{{ filtro_q|default_if_none:'' }}">
+
+                <select name="status"
+                        style="padding:6px 8px; border-radius:6px; border:1px solid #e5e7eb;">
+                    <option value="todos"
+                        {% if filtro_status == "todos" %}selected{% endif %}>
+                        Todos
+                    </option>
+                    <option value="ativo"
+                        {% if filtro_status == "ativo" %}selected{% endif %}>
+                        Ativos
+                    </option>
+                    <option value="inativo"
+                        {% if filtro_status == "inativo" %}selected{% endif %}>
+                        Inativos
+                    </option>
+                </select>
+
+                <button type="submit" class="btn-add" style="text-decoration:none;">
+                    Filtrar
+                </button>
+            </form>
+        </div>
+
+        <table id="products-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Vendedor / Loja</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Status</th>
+                    <th style="width:170px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in produtos %}
+                <tr>
+                    <td>#{{ p.id }}</td>
+                    <td>
+                        <div class="user-info-cell">
+                            <!-- Nome leva pra página de detalhes -->
+                            <a href="{% url 'admin_produto_detalhe' p.id %}"
+                               style="text-decoration:none; color:inherit; font-weight:500;">
+                                {{ p.nome }}
+                            </a>
+                            {% if p.descricao %}
+                                <span class="user-email">{{ p.descricao|truncatechars:60 }}</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>{{ p.categoria.nome }}</td>
+                    <td>
+                        {% if p.loja %}
+                            {{ p.loja.nome }}{% if p.vendedor %} ({{ p.vendedor.nome }}){% endif %}
+                        {% elif p.vendedor %}
+                            {{ p.vendedor.nome }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>R$ {{ p.preco_final|floatformat:2 }}</td>
+                    <td>{{ p.q_estoque }}</td>
+                    <td>
+                        {% if p.ativo %}
+                            <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                    <td style="white-space:nowrap; display:flex; gap:8px;">
+
+                        <!-- 🔁 TOGGLE ATIVO/INATIVO -->
+                        <form method="post"
+                              action="{% url 'admin_toggle_produto_ativo' p.id %}">
+                            {% csrf_token %}
+                            {% if p.ativo %}
+                                <button type="submit"
+                                        class="action-btn-pill btn-toggle-off"
+                                        title="Desativar produto">
+                                    <i data-lucide="pause-circle"></i>
+                                    <span>Desativar</span>
+                                </button>
+                            {% else %}
+                                <button type="submit"
+                                        class="action-btn-pill btn-toggle-on"
+                                        title="Ativar produto">
+                                    <i data-lucide="play-circle"></i>
+                                    <span>Ativar</span>
+                                </button>
+                            {% endif %}
+                        </form>
+
+                        <!-- 👁 Ver detalhes -->
+                        <a href="{% url 'admin_produto_detalhe' p.id %}"
+                           class="action-btn-pill btn-view"
+                           title="Ver detalhes"
+                           style="text-decoration:none;">
+                            <i data-lucide="eye"></i>
+                            <span>Ver</span>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">Nenhum produto cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

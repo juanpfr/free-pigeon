@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Free Pigeon</title>
+    <link rel="stylesheet" href="{% static 'css/admlogin.css' %}">
+</head>
+
+<body>
+    <div class="admin-login-container">
+        <div class="login-card">
+            <div class="logo-area">
+                <img src="{% static 'img/freepigeon.png' %}">
+                <h1>Acesso Administrativo</h1>
+                <p>Gerencie sua plataforma</p>
+            </div>
+
+            <!-- mensagem de erro -->
+            <div id="error-msg"
+                 class="error-msg"
+                 {% if login_error or messages %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                {% if messages %}
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                {% else %}
+                    Credenciais inválidas. Tente novamente.
+                {% endif %}
+            </div>
+
+            <!-- FORM NORMAL, POST para adm/login -->
+            <form id="admin-login-form" method="post" action="{% url 'admin_login' %}">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <div class="input-wrapper">
+                        <!-- pode deixar o ícone só via CSS ou texto -->
+                        <input type="text" id="username" name="username" placeholder="admin" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <div class="input-wrapper">
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-login">
+                    Entrar no Painel
+                </button>
+            </form>
+
+            <a href="/" class="back-link">← Voltar para o site</a>
+        </div>
+    </div>
+
+</body>
+</html>

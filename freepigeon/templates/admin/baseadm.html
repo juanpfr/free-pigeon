@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin - Free Pigeon{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <a href="/" class="sidebar-logo">
+                <img src="{% static 'img/freepigeon.png' %}">
+                <span>Free Pigeon</span>
+            </a>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item" href="{% url 'admin_dashboard' %}">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Visão Geral</span>
+            </a>
+
+            <a class="nav-item" href="{% url 'admin_usuarios' %}">
+                <i data-lucide="users"></i>
+                <span>Usuários</span>
+            </a>
+
+            <a class="nav-item" href="{% url 'admin_planos' %}">
+                <i data-lucide="credit-card"></i>
+                <span>Planos</span>
+            </a>
+
+            <a class="nav-item" href="{% url 'admin_categorias' %}">
+                <i data-lucide="tags"></i>
+                <span>Categorias</span>
+            </a>
+
+            <a class="nav-item" href="{% url 'admin_produtos' %}">
+                <i data-lucide="package"></i>
+                <span>Produtos</span>
+            </a>
+
+            <a class="nav-item" href="{% url 'admin_transacoes' %}">
+                <i data-lucide="dollar-sign"></i>
+                <span>Transações</span>
+            </a>
+        </nav>
+
+        <!-- Footer -->
+        <div class="sidebar-footer">
+            <form method="post" action="{% url 'admin_logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="footer-btn btn-logout">
+                    <i data-lucide="log-out"></i>
+                    <span>Sair</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+        <header class="admin-header">
+            <h2 class="header-title">{% block header_title %}{% endblock %}</h2>
+            <div class="admin-user">
+                <span>{{ admin_username }}</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</body>
+</html>

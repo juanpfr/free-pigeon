@@ -1,0 +1,83 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}
+    {% if categoria %}Editar Categoria - {{ categoria.nome }}{% else %}Nova Categoria{% endif %} - Free Pigeon
+{% endblock %}
+
+{% block header_title %}
+    {% if categoria %}Editar Categoria{% else %}Nova Categoria{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="section-container active">
+    <div class="table-container form-card-narrow">
+        <div class="table-header-actions form-card-header">
+            <div>
+                <h3>
+                    {% if categoria %}Editar Categoria{% else %}Criar Nova Categoria{% endif %}
+                </h3>
+                <p class="muted-text">
+                    Defina o nome e, se quiser, uma imagem para representar essa categoria nas listagens do site.
+                </p>
+            </div>
+        </div>
+
+        <form method="post"
+              enctype="multipart/form-data"
+              action="{% if categoria %}{% url 'admin_editar_categoria' categoria.id %}{% else %}{% url 'admin_criar_categoria' %}{% endif %}">
+            {% csrf_token %}
+
+            <div class="form-body">
+                <div class="form-group">
+                    <label for="nome">Nome da Categoria</label>
+                    <input type="text"
+                           id="nome"
+                           name="nome"
+                           required
+                           value="{% if categoria %}{{ categoria.nome }}{% endif %}"
+                           placeholder="Ex: Eletrônicos, Moda, Games...">
+                    <small class="helper-text">
+                        Esse nome será exibido para os usuários em filtros, cards e páginas de produto.
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="imagem">Imagem (opcional)</label>
+
+                    {% if categoria and categoria.imagem %}
+                        <div class="image-preview-row">
+                            <img src="{{ categoria.imagem.url }}"
+                                 alt="Imagem atual"
+                                 class="image-preview-thumb">
+                            <div class="image-preview-text">
+                                <p class="image-preview-label">Imagem atual</p>
+                                <p class="helper-text">
+                                    Você pode enviar uma nova imagem para substituir esta.
+                                </p>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <input type="file"
+                           id="imagem"
+                           name="imagem"
+                           accept="image/*">
+                    <small class="helper-text">
+                        Formatos comuns (JPG, PNG). Deixe em branco para manter a imagem atual.
+                    </small>
+                </div>
+            </div>
+
+            <div class="confirm-actions">
+                <a href="{% url 'admin_categorias' %}"
+                   class="btn-cancel confirm-btn-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-save">
+                    {% if categoria %}Salvar alterações{% else %}Criar categoria{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

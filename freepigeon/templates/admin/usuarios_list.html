@@ -1,0 +1,127 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Usuários - Free Pigeon{% endblock %}
+{% block header_title %}Gerenciar Usuários{% endblock %}
+
+{% block content %}
+
+<div class="table-container">
+    <div class="table-header-actions">
+        <h3>Usuários Cadastrados</h3>
+
+        <!-- Filtros (GET) -->
+        <form method="get" style="display:flex; gap:8px; align-items:center;">
+            <input type="text"
+                   name="q"
+                   class="search-input"
+                   placeholder="Buscar por nome ou e-mail..."
+                   value="{{ filtro_q|default_if_none:'' }}">
+
+            <select name="status"
+                    style="padding:6px 8px; border-radius:6px; border:1px solid #e5e7eb;">
+                <option value="todos"
+                    {% if filtro_status == "todos" %}selected{% endif %}>
+                    Todos
+                </option>
+                <option value="ativo"
+                    {% if filtro_status == "ativo" %}selected{% endif %}>
+                    Ativos
+                </option>
+                <option value="inativo"
+                    {% if filtro_status == "inativo" %}selected{% endif %}>
+                    Inativos
+                </option>
+            </select>
+
+            <button type="submit" class="btn-add" style="text-decoration:none;">
+                Filtrar
+            </button>
+        </form>
+    </div>
+
+    <table id="users-table">
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Loja</th>
+                <th>Plano</th>
+                <th>Status</th>
+                <th style="width:170px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>
+                    <!-- Clica no nome → detalhes -->
+                    <a href="{% url 'admin_usuario_detalhe' u.id %}"
+                       style="text-decoration:none; color:inherit; font-weight:500;">
+                        {{ u.nome }}
+                    </a>
+                </td>
+                <td>{{ u.email }}</td>
+                <td>
+                    {% if u.loja %}
+                        {{ u.loja.nome }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if u.plano %}
+                        <span class="badge badge-neutral">{{ u.plano.nome }}</span>
+                    {% else %}
+                        <span class="badge badge-neutral">Sem plano</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if u.ativo %}
+                        <span class="badge badge-success">Ativo</span>
+                    {% else %}
+                        <span class="badge badge-danger">Inativo</span>
+                    {% endif %}
+                </td>
+                <td style="white-space:nowrap; display:flex; gap:8px;">
+
+                    <!-- 🔁 TOGGLE ATIVO/INATIVO -->
+                    <form method="post"
+                          action="{% url 'admin_toggle_usuario_ativo' u.id %}">
+                        {% csrf_token %}
+                        {% if u.ativo %}
+                            <button type="submit"
+                                    class="action-btn-pill btn-toggle-off"
+                                    title="Desativar usuário">
+                                <i data-lucide="pause-circle"></i>
+                                <span>Desativar</span>
+                            </button>
+                        {% else %}
+                            <button type="submit"
+                                    class="action-btn-pill btn-toggle-on"
+                                    title="Ativar usuário">
+                                <i data-lucide="play-circle"></i>
+                                <span>Ativar</span>
+                            </button>
+                        {% endif %}
+                    </form>
+
+                    <!-- 👁 Ver detalhes -->
+                    <a href="{% url 'admin_usuario_detalhe' u.id %}"
+                       class="action-btn-pill btn-view"
+                       title="Ver detalhes"
+                       style="text-decoration:none;">
+                        <i data-lucide="eye"></i>
+                        <span>Ver</span>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">Nenhum usuário encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

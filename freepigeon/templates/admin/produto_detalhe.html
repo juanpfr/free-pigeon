@@ -1,0 +1,203 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Produto - {{ produto.nome }} - Free Pigeon{% endblock %}
+{% block header_title %}Detalhes do Produto{% endblock %}
+
+{% block content %}
+<div class="section-container active" style="display:flex; flex-direction:column; gap:20px;">
+
+    <!-- Resumo principal -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Produto</div>
+            <div class="stat-value">{{ produto.nome }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Categoria</div>
+            <div class="stat-value">
+                {{ produto.categoria.nome }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Preço atual</div>
+            <div class="stat-value">
+                R$ {{ produto.preco_final|floatformat:2 }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Status</div>
+            <div class="stat-value">
+                {% if produto.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados básicos -->
+    <div class="table-container">
+        <h3>Dados do Produto</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <th style="width:220px;">Nome</th>
+                    <td>{{ produto.nome }}</td>
+                </tr>
+                <tr>
+                    <th>Descrição</th>
+                    <td>{{ produto.descricao|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>Categoria</th>
+                    <td>{{ produto.categoria.nome }}</td>
+                </tr>
+                <tr>
+                    <th>Vendedor</th>
+                    <td>
+                        {% if produto.vendedor %}
+                            {{ produto.vendedor.nome }} ({{ produto.vendedor.email }})
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Loja</th>
+                    <td>
+                        {% if produto.loja %}
+                            {{ produto.loja.nome }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Preço original</th>
+                    <td>R$ {{ produto.valor|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>Desconto (%)</th>
+                    <td>
+                        {% if produto.desconto %}
+                            {{ produto.desconto }}%
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Preço final</th>
+                    <td>R$ {{ produto.preco_final|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                    <th>Estoque</th>
+                    <td>{{ produto.q_estoque }}</td>
+                </tr>
+                <tr>
+                    <th>Imagem</th>
+                    <td>
+                        {% if produto.imagem %}
+                            <img src="{{ produto.imagem.url }}"
+                                 alt="{{ produto.nome }}"
+                                 style="max-width:180px; border-radius:8px; border:1px solid #e5e7eb;">
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Atributos dinâmicos -->
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Atributos do Produto</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Atributo</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pa in atributos %}
+                <tr>
+                    <td>{{ pa.atributo.nome }}</td>
+                    <td>{{ pa.valor }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">Nenhum atributo cadastrado para este produto.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Resumo de vendas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Quantidade vendida</div>
+            <div class="stat-value">
+                {{ total_quantidade_vendida }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Faturamento acumulado</div>
+            <div class="stat-value">
+                R$ {{ total_faturado_produto|floatformat:2 }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pedidos que contêm este produto -->
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Pedidos com este produto</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Data</th>
+                    <th>Cliente</th>
+                    <th>Quantidade</th>
+                    <th>Preço unitário</th>
+                    <th>Subtotal</th>
+                    <th>Status do pedido</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens_pedido %}
+                <tr>
+                    <td>#{{ item.pedido.id }}</td>
+                    <td>{{ item.pedido.data_efetuado|date:"d/m/Y H:i" }}</td>
+                    <td>{{ item.pedido.usuario.nome }}</td>
+                    <td>{{ item.quantidade }}</td>
+                    <td>R$ {{ item.preco_unitario|floatformat:2 }}</td>
+                    <td>R$ {{ item.subtotal|floatformat:2 }}</td>
+                    <td>
+                        {% if item.pedido.status|lower == 'pago' or item.pedido.status|lower == 'concluído' %}
+                            <span class="badge badge-success">{{ item.pedido.status }}</span>
+                        {% elif item.pedido.status|lower == 'pendente' or item.pedido.status|lower == 'processando' %}
+                            <span class="badge badge-warning">{{ item.pedido.status }}</span>
+                        {% else %}
+                            <span class="badge badge-neutral">{{ item.pedido.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">Nenhuma venda registrada para este produto.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

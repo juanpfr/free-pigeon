@@ -1,0 +1,76 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Categorias - Free Pigeon{% endblock %}
+{% block header_title %}Categorias do Site{% endblock %}
+
+{% block content %}
+<div class="section-container active">
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Categorias cadastradas</h3>
+
+            <a href="{% url 'admin_criar_categoria' %}" class="btn-add" style="text-decoration:none;">
+                <p>+</p> Nova Categoria
+            </a>
+        </div>
+
+        <table id="categories-table">
+            <thead>
+                <tr>
+                    <th>Imagem</th>
+                    <th>Nome</th>
+                    <th>Produtos</th>
+                    <th style="width:200px;">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in categorias %}
+                <tr>
+                    <td>
+                        {% if c.imagem %}
+                            <img src="{{ c.imagem.url }}"
+                                 style="border-radius:4px;width:40px;height:40px;object-fit:cover;">
+                        {% else %}
+                            <div style="width:40px;height:40px;border-radius:4px;border:1px solid #e5e7eb;
+                                        display:flex;align-items:center;justify-content:center;
+                                        font-size:11px;color:#6b7280;">
+                                Sem img
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ c.nome }}</td>
+                    <td>{{ c.produtos_count }}</td>
+                    <td>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+
+                            <!-- Editar -->
+                            <a href="{% url 'admin_editar_categoria' c.id %}"
+                               class="action-btn-pill btn-view"
+                               style="text-decoration:none;"
+                               title="Editar categoria">
+                                <i data-lucide="edit-2"></i>
+                                <span>Editar</span>
+                            </a>
+
+                            <!-- Excluir -->
+                            <a href="{% url 'admin_excluir_categoria' c.id %}"
+                               class="action-btn-pill btn-delete"
+                               style="text-decoration:none;"
+                               title="Excluir categoria">
+                                <i data-lucide="trash-2"></i>
+                                <span>Excluir</span>
+                            </a>
+
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">Nenhuma categoria cadastrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

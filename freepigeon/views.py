@@ -3,6 +3,7 @@
 # ===============================
 import stripe
 import re
+from functools import wraps
 from .utils_frete import calcular_frete_correios
 from decimal import Decimal
 from django.conf import settings
@@ -14,8 +15,12 @@ from django.db import IntegrityError
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db.models import Q
+from django.db.models import Q, Sum, F
 from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now
+from django.db.models import Count
+from django.urls import reverse
+
 
 
 # ===============================
@@ -25,8 +30,22 @@ from .models import (
     Usuario, Loja, Categoria, Produto,
     Carrinho, CarrinhoProduto,
     Pedido, PedidoProduto,
-    Endereco, Plano
+    Endereco, Plano, AdminUser
 )
+
+def usuario_login_required(view_func):
+    """
+    Verifica se existe 'usuario_id' na sessão.
+    Se não tiver, manda pra tela de login, com ?next=<url>.
+    """
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not request.session.get('usuario_id'):
+            login_url = reverse('login')
+            next_param = request.path
+            return redirect(f"{login_url}?next={next_param}")
+        return view_func(request, *args, **kwargs)
+    return _wrapped
 
 # ============================================================
 # PLANOS
@@ -42,7 +61,7 @@ def get_default_plan():
         return plano
     return Plano.objects.filter(ativo=True).order_by('preco_mensal').first()
 
-@login_required(login_url='login')
+@usuario_login_required
 def planos(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -62,10 +81,49 @@ def planos(request):
         'stripe_public_key': stripe_public_key,
     })
 
-@login_required(login_url='login')
+def criar_checkout_plano(usuario, plano, origem='upgrade'):
+    """
+    Helper para criar uma sessão de checkout de plano no Stripe.
+    Usado tanto no upgrade (/planos) quanto no cadastro.
+    """
+    # Se for plano gratuito, não precisa Stripe
+    if plano.preco_mensal <= 0:
+        return None
+
+    valor_centavos = int(plano.preco_mensal * 100)
+
+    domain_url = usuario._request.build_absolute_uri('/')[:-1]  # explico já já
+    success_url = domain_url + '/planos/sucesso/?session_id={CHECKOUT_SESSION_ID}'
+    cancel_url = domain_url + '/planos/'
+
+    checkout_session = stripe.checkout.Session.create(
+        payment_method_types=['card', 'pix'],
+        mode='payment',
+        line_items=[{
+            'price_data': {
+                'currency': 'brl',
+                'product_data': {'name': f'Plano {plano.nome}'},
+                'unit_amount': valor_centavos,
+            },
+            'quantity': 1,
+        }],
+        success_url=success_url,
+        cancel_url=cancel_url,
+        client_reference_id=str(usuario.id),
+        customer_email=usuario.email,
+        metadata={
+            'usuario_id': usuario.id,
+            'plano_slug': plano.slug,
+            'origem': origem,
+        },
+    )
+    return checkout_session
+
+
+@usuario_login_required
 @require_POST
 def create_plan_checkout_session(request):
-    """Cria uma Checkout Session para upgrade de plano."""
+    """Cria uma Checkout Session para upgrade de plano (página /planos)."""
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
 
@@ -86,7 +144,7 @@ def create_plan_checkout_session(request):
     cancel_url = domain_url + '/planos/'
 
     checkout_session = stripe.checkout.Session.create(
-        payment_method_types=['card', 'pix'],  # cartão e pix
+        payment_method_types=['card'],  # 👈 apenas cartão aqui também
         mode='payment',
         line_items=[{
             'price_data': {
@@ -108,35 +166,58 @@ def create_plan_checkout_session(request):
         },
     )
 
+
     return JsonResponse({'sessionId': checkout_session.id})
 
 
-@login_required(login_url='login')
 def plan_success(request):
-    """Confirma pagamento do plano e ativa no usuário."""
+    """Confirma pagamento do plano e ativa no usuário, garantindo login."""
     session_id = request.GET.get('session_id')
-    usuario_id = request.session.get('usuario_id')
 
-    if not session_id or not usuario_id:
+    if not session_id:
         return redirect('planos')
 
     try:
         session = stripe.checkout.Session.retrieve(session_id)
-        if session.payment_status == 'paid':
-            plano_slug = session.metadata.get('plano_slug')
-            plano = Plano.objects.get(slug=plano_slug)
-            usuario = Usuario.objects.get(id=usuario_id)
 
+        if session.payment_status == 'paid':
+            # Pega infos da sessão do Stripe
+            metadata = session.get('metadata', {}) or {}
+            plano_slug = metadata.get('plano_slug')
+            usuario_id_meta = metadata.get('usuario_id')
+            origem = metadata.get('origem')  # 'cadastro' ou vazio
+
+            if not (plano_slug and usuario_id_meta):
+                messages.error(request, 'Não foi possível identificar o plano ou usuário.')
+                return redirect('planos')
+
+            plano = Plano.objects.get(slug=plano_slug)
+            usuario = Usuario.objects.get(id=usuario_id_meta)
+
+            # Atualiza plano do usuário
             usuario.plano = plano
             usuario.save()
 
+            # 🔑 Garante que o usuário esteja logado na sua sessão manual
+            request.session['usuario_id'] = usuario.id
+            request.session['usuario_nome'] = usuario.nome
+
             messages.success(request, f'Seu plano {plano.nome} foi ativado com sucesso!')
+
+            # Se veio do cadastro, manda pra home
+            if origem == 'cadastro':
+                return redirect('home')
+
+            # Se veio de upgrade dentro do sistema, volta pra tela de planos
+            return redirect('planos')
+
         else:
             messages.error(request, 'Pagamento do plano ainda não foi concluído.')
+            return redirect('planos')
+
     except Exception as e:
         messages.error(request, f'Erro ao confirmar pagamento do plano: {e}')
-
-    return redirect('planos')
+        return redirect('planos')
 
 # ============================================================
 # USUÁRIO / LOGIN / LOGOUT / CADASTRO
@@ -153,60 +234,43 @@ def so_digitos(valor):
     return re.sub(r'\D', '', str(valor))
 
 def cadastrar_usuario(request):
-    # Planos ativos para mostrar no cadastro
-    planos = Plano.objects.filter(ativo=True).order_by('preco_mensal')
-
-    # Mesma lógica do login_view para saber se veio do /auth
-    previous_url = request.META.get('HTTP_REFERER', '')
-    veio_do_auth = 'auth' in previous_url
-
     if request.method == 'POST':
         nome = request.POST.get('nome')
         email = request.POST.get('email')
-        telefone = so_digitos(request.POST.get('telefone')) or None
-        cpf = so_digitos(request.POST.get('cpf')) or None
+        telefone = request.POST.get('telefone')
+        cpf = request.POST.get('cpf')
         senha = request.POST.get('senha')
         plano_slug = request.POST.get('plano')
 
-        # --- Validações básicas ---
-        if Usuario.objects.filter(email=email).exists():
-            messages.error(request, 'E-mail já cadastrado!')
-            return render(request, 'cadastro.html', {
-                'planos': planos,
-                'veio_do_auth': veio_do_auth,
-            })
+        plano_escolhido = Plano.objects.filter(slug=plano_slug).first()
 
-        if cpf and Usuario.objects.filter(cpf=cpf).exists():
-            messages.error(request, 'CPF já cadastrado!')
-            return render(request, 'cadastro.html', {
-                'planos': planos,
-                'veio_do_auth': veio_do_auth,
-            })
-
-        # --- Descobrir plano escolhido ---
-        plano_escolhido = None
-        if plano_slug:
-            plano_escolhido = Plano.objects.filter(slug=plano_slug, ativo=True).first()
-
+        # Segurança: se não veio plano, usa o default
         if not plano_escolhido:
-            # fallback: plano padrão
-            plano_escolhido = get_default_plan()
+            plano_escolhido = Plano.objects.filter(is_default=True).first()
 
-        # --- Criar usuário ---
+        # Cria o usuário
         usuario = Usuario.objects.create(
             nome=nome,
             email=email,
             telefone=telefone,
             cpf=cpf,
-            senha=make_password(senha),
-            plano=plano_escolhido,
+            senha=senha,
+            plano=plano_escolhido
         )
 
-        # Auto-login na sessão "manual"
         request.session['usuario_id'] = usuario.id
-        request.session['usuario_nome'] = usuario.nome
 
-        # --- Se o plano for pago, manda direto para o checkout do Stripe ---
+        # -----------------------------------------------------
+        # >>> É AQUI <<< onde você coloca o print e o if
+        # -----------------------------------------------------
+
+        is_plano_pago = plano_escolhido.preco_mensal > 0
+
+        print("PLANO ESCOLHIDO:", plano_escolhido.nome)
+        print("É PAGO?", is_plano_pago)
+        print("Valor:", plano_escolhido.preco_mensal)
+
+        # Se o plano é pago → iniciar Stripe Checkout
         if plano_escolhido and plano_escolhido.preco_mensal and plano_escolhido.preco_mensal > 0:
             try:
                 valor_centavos = int(plano_escolhido.preco_mensal * 100)
@@ -216,7 +280,8 @@ def cadastrar_usuario(request):
                 cancel_url = domain_url + '/planos/'
 
                 checkout_session = stripe.checkout.Session.create(
-                    payment_method_types=['card', 'pix'],  # cartão + pix
+                    # 👇 POR ENQUANTO SOMENTE CARTÃO
+                    payment_method_types=['card'],
                     mode='payment',
                     line_items=[{
                         'price_data': {
@@ -239,7 +304,6 @@ def cadastrar_usuario(request):
                     },
                 )
 
-                # Redireciona direto para a página de pagamento do Stripe
                 return redirect(checkout_session.url)
 
             except Exception as e:
@@ -251,15 +315,10 @@ def cadastrar_usuario(request):
                 )
                 return redirect('planos')
 
-        # --- Se o plano for gratuito, segue o fluxo normal ---
-        messages.success(request, 'Conta criada com sucesso! Você está no plano gratuito.')
-        return redirect('home')
 
     # GET
-    return render(request, 'cadastro.html', {
-        'planos': planos,
-        'veio_do_auth': veio_do_auth,
-    })
+    planos = Plano.objects.filter(ativo=True)
+    return render(request, "cadastro.html", { "planos": planos })
 
 
 
@@ -347,7 +406,7 @@ def auth_view(request):
 # PERFIL / ÁREA DO VENDEDOR
 # ============================================================
 
-@login_required(login_url='login')
+@usuario_login_required
 def perfil(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -374,7 +433,7 @@ def perfil(request):
     })
 
 
-@login_required(login_url='login')
+@usuario_login_required
 def editar_perfil(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -401,7 +460,7 @@ def editar_perfil(request):
     })
 
 
-@login_required(login_url='login')
+@usuario_login_required
 def alterar_senha(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -433,7 +492,7 @@ def alterar_senha(request):
         'usuario_nome': usuario.nome,
     })
 
-@login_required(login_url='login')
+@usuario_login_required
 def enderecos(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -477,7 +536,7 @@ def enderecos(request):
         'enderecos': enderecos,
     })
 
-@login_required(login_url='login')
+@usuario_login_required
 def editar_endereco(request, endereco_id):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -520,7 +579,7 @@ def editar_endereco(request, endereco_id):
         'endereco': endereco,
     })
 
-@login_required(login_url='login')
+@usuario_login_required
 def excluir_endereco(request, endereco_id):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -537,7 +596,7 @@ def excluir_endereco(request, endereco_id):
         'endereco': endereco,
     })
 
-@login_required(login_url='login')
+@usuario_login_required
 def definir_endereco_principal(request, endereco_id):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -550,7 +609,7 @@ def definir_endereco_principal(request, endereco_id):
     return redirect('enderecos')
 
 
-@login_required(login_url='login')
+@usuario_login_required
 def vender(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -573,7 +632,7 @@ def _get_produto_do_usuario(usuario, produto_id):
     return get_object_or_404(Produto, Q(id=produto_id) & filtros)
 
 
-@login_required(login_url='login')
+@usuario_login_required
 def anuncios(request):
     usuario_id = request.session.get('usuario_id')
     if not usuario_id:
@@ -598,7 +657,7 @@ def anuncios(request):
 
 from django.contrib.auth.decorators import login_required
 
-@login_required(login_url='login')
+@usuario_login_required
 def editar_anuncio(request, produto_id):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -685,7 +744,7 @@ def editar_anuncio(request, produto_id):
         'categorias': categorias,
     })
 
-@login_required(login_url='login')
+@usuario_login_required
 def excluir_anuncio(request, produto_id):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -699,13 +758,13 @@ def excluir_anuncio(request, produto_id):
         return redirect('anuncios')
 
     # GET: mostra tela de confirmação
-    return render(request, 'confirmar_exclusao_anuncio.html', {
+    return render(request, 'confirmar_exlusao_anuncio.html', {
         'usuario_nome': usuario.nome,
         'usuario': usuario,
         'produto': produto,
     })
 
-@login_required(login_url='login')
+@usuario_login_required
 def toggle_status_anuncio(request, produto_id):
     if request.method != 'POST':
         return redirect('anuncios')
@@ -726,7 +785,7 @@ def toggle_status_anuncio(request, produto_id):
     return redirect('anuncios')
 
 
-@login_required(login_url='login')
+@usuario_login_required
 def resumo(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -756,10 +815,21 @@ def resumo(request):
 
 # ====== NOVO: CRIAR LOJA ======
 
-@login_required(login_url='login')
+@usuario_login_required
 def criar_loja(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
+
+    plano_usuario = usuario.plano or get_default_plan()
+
+    # ❌ Bloquear criação de loja no plano gratuito padrão
+    if plano_usuario and plano_usuario.is_default:
+        messages.error(
+            request,
+            'No plano gratuito você não pode criar uma loja. '
+            'Faça upgrade de plano para poder criar uma loja.'
+        )
+        return redirect('planos')
 
     if request.method == 'POST':
         nome = (request.POST.get('nome') or '').strip()
@@ -780,7 +850,7 @@ def criar_loja(request):
 
 # ====== NOVO: CADASTRAR PRODUTO ======
 
-@login_required(login_url='login')
+@usuario_login_required
 def cadastrar_produto(request):
     usuario_id = request.session.get('usuario_id')
     usuario = get_object_or_404(Usuario, id=usuario_id)
@@ -1331,7 +1401,7 @@ def _frete_simulado(peso_total: Decimal, cep_destino: str):
     ]
 
 
-@login_required(login_url='login')
+@usuario_login_required
 @require_POST
 def calcular_frete(request):
     """
@@ -1441,3 +1511,647 @@ def stripe_webhook(request):
     # Por enquanto só responde 200 pra não quebrar nada.
     # Depois a gente coloca a lógica do Stripe aqui.
     return HttpResponse(status=200)
+
+#============================================================
+# DASHBOARD ADMIN
+#============================================================
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def _wrapped(request, *args, **kwargs):
+        if not request.session.get("admin_id"):
+            return redirect("admin_login")
+        return view_func(request, *args, **kwargs)
+    return _wrapped
+
+def _get_admin_username(request):
+    admin_id = request.session.get("admin_id")
+    if not admin_id:
+        return "Admin"
+    admin = AdminUser.objects.filter(id=admin_id).first()
+    return admin.username if admin else "Admin"
+
+@csrf_exempt
+def admin_login(request):
+    # Se já está logado como admin, manda pro dashboard
+    if request.session.get("admin_id"):
+        return redirect("admin_dashboard")
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        admin = None
+        try:
+            admin = AdminUser.objects.get(username=username)
+        except AdminUser.DoesNotExist:
+            admin = None
+
+        if admin and admin.verify_password(password):
+            request.session["admin_id"] = admin.id
+
+            # Se for AJAX, responde JSON
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": True})
+
+            # Se for form normal, redireciona
+            return redirect("admin_dashboard")
+        else:
+            # Se for AJAX, responde JSON de erro
+            if request.headers.get("x-requested-with") == "XMLHttpRequest":
+                return JsonResponse({"success": False})
+
+            # Se for form normal, mostra erro na tela
+            messages.error(request, "Usuário ou senha inválidos.")
+            return render(request, "admin/loginadm.html", {"login_error": True})
+
+    # GET
+    return render(request, "admin/loginadm.html")
+
+@admin_required
+def admin_dashboard(request):
+    admin_id = request.session.get("admin_id")
+    admin_user = AdminUser.objects.filter(id=admin_id).first()
+
+    usuarios = Usuario.objects.all()
+    produtos = Produto.objects.all()
+    pedidos = Pedido.objects.select_related('usuario').prefetch_related('itens__produto').order_by('-data_efetuado')
+
+    receita_total = sum(p.total() for p in pedidos) if pedidos else 0
+    usuarios_ativos = usuarios.count()
+    produtos_cadastrados = produtos.count()
+    hoje = now().date()
+    pedidos_hoje = pedidos.filter(data_efetuado__date=hoje).count()
+
+    for p in pedidos:
+        p.total_valor = p.total()
+
+    context = {
+        'admin_username': admin_user.username if admin_user else 'Admin',
+        'dash_receita_total': receita_total,
+        'dash_usuarios_ativos': usuarios_ativos,
+        'dash_produtos_cadastrados': produtos_cadastrados,
+        'dash_pedidos_hoje': pedidos_hoje,
+        'ultimas_transacoes': pedidos[:5],
+    }
+    return render(request, 'admin/adm.html', context)
+
+
+def admin_logout(request):
+    request.session.pop("admin_id", None)
+    return redirect("admin_login")
+
+
+@admin_required
+def admin_planos(request):
+    planos = Plano.objects.annotate(
+        assinantes_count=Count('usuario')  # reverse de Usuario.plano
+    )
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "planos": planos,
+    }
+    return render(request, "admin/planos_list.html", context)
+
+
+@admin_required
+def admin_criar_plano(request):
+    if request.method == 'POST':
+        nome = (request.POST.get('nome') or '').strip()
+        slug = (request.POST.get('slug') or '').strip().lower()
+        descricao = (request.POST.get('descricao') or '').strip()
+        preco_raw = (request.POST.get('preco_mensal') or '').strip()
+        limite_raw = (request.POST.get('limite_anuncios') or '').strip()
+        ativo = bool(request.POST.get('ativo'))
+        is_default = bool(request.POST.get('is_default'))
+
+        if not nome or not slug:
+            messages.error(request, 'Nome e slug são obrigatórios para o plano.')
+            return redirect('admin_dashboard')
+
+        try:
+            preco = Decimal(preco_raw.replace(',', '.')) if preco_raw else Decimal('0.00')
+        except Exception:
+            messages.error(request, 'Preço mensal inválido.')
+            return redirect('admin_dashboard')
+
+        limite = None
+        if limite_raw:
+            try:
+                limite = int(limite_raw)
+            except Exception:
+                messages.error(request, 'Limite de anúncios inválido.')
+                return redirect('admin_dashboard')
+
+        # Se marcar como default, força regras do plano gratuito
+        if is_default:
+            Plano.objects.update(is_default=False)
+            preco = Decimal('0.00')
+            limite = 5
+
+        Plano.objects.create(
+            nome=nome,
+            slug=slug,
+            descricao=descricao or None,
+            preco_mensal=preco,
+            limite_anuncios=limite,
+            ativo=ativo,
+            is_default=is_default,
+        )
+
+        messages.success(request, 'Plano criado com sucesso.')
+        return redirect('admin_dashboard')
+
+    # GET → mostrar formulário vazio
+    context = {
+        'admin_username': _get_admin_username(request),
+        'plano': None,
+    }
+    return render(request, 'admin/planos_form.html', context)
+
+
+@admin_required
+def admin_editar_plano(request, plano_id):
+    plano = get_object_or_404(Plano, id=plano_id)
+
+    if request.method == 'POST':
+        nome = (request.POST.get('nome') or '').strip()
+        slug = (request.POST.get('slug') or '').strip().lower()
+        descricao = (request.POST.get('descricao') or '').strip()
+        preco_raw = (request.POST.get('preco_mensal') or '').strip()
+        limite_raw = (request.POST.get('limite_anuncios') or '').strip()
+        ativo = bool(request.POST.get('ativo'))
+        is_default = bool(request.POST.get('is_default'))
+
+        if not nome or not slug:
+            messages.error(request, 'Nome e slug são obrigatórios para o plano.')
+            return redirect('admin_dashboard')
+
+        try:
+            preco = Decimal(preco_raw.replace(',', '.')) if preco_raw else Decimal('0.00')
+        except Exception:
+            messages.error(request, 'Preço mensal inválido.')
+            return redirect('admin_dashboard')
+
+        limite = None
+        if limite_raw:
+            try:
+                limite = int(limite_raw)
+            except Exception:
+                messages.error(request, 'Limite de anúncios inválido.')
+                return redirect('admin_dashboard')
+
+        plano.nome = nome
+        plano.slug = slug
+        plano.descricao = descricao or None
+        plano.ativo = ativo
+
+        if plano.is_default:
+            # Se já é o plano padrão, mantém regras de gratuito
+            plano.preco_mensal = Decimal('0.00')
+            plano.limite_anuncios = 5
+            plano.is_default = True
+        else:
+            if is_default:
+                # Tornar esse o novo default gratuito
+                Plano.objects.exclude(id=plano.id).update(is_default=False)
+                plano.is_default = True
+                plano.preco_mensal = Decimal('0.00')
+                plano.limite_anuncios = 5
+            else:
+                plano.is_default = False
+                plano.preco_mensal = preco
+                plano.limite_anuncios = limite
+
+        plano.save()
+        messages.success(request, 'Plano atualizado com sucesso.')
+        return redirect('admin_dashboard')
+
+    # GET → mostrar formulário preenchido
+    context = {
+        'admin_username': _get_admin_username(request),
+        'plano': plano,
+    }
+    return render(request, 'admin/planos_form.html', context)
+
+
+@admin_required
+def admin_excluir_plano(request, plano_id):
+    plano = get_object_or_404(Plano, id=plano_id)
+
+    if plano.is_default:
+        messages.error(request, 'Você não pode excluir o plano gratuito padrão.')
+        return redirect('admin_dashboard')
+
+    if request.method == 'POST':
+        plano.delete()
+        messages.success(request, 'Plano excluído com sucesso.')
+        return redirect('admin_dashboard')
+
+    # GET → tela de confirmação
+    context = {
+        'admin_username': _get_admin_username(request),
+        'plano': plano,
+    }
+    return render(request, 'admin/planos_confirm_delete.html', context)
+
+
+@admin_required
+def admin_toggle_plano_ativo(request, plano_id):
+    """
+    Ativar / desativar plano.
+    - Se desativar um plano (não padrão), todos os usuários desse plano
+      são movidos para o plano padrão gratuito.
+    """
+    if request.method != "POST":
+        return redirect("admin_planos")
+
+    plano = get_object_or_404(Plano, id=plano_id)
+
+    # Não permitir desativar o plano padrão
+    if plano.is_default and plano.ativo:
+        messages.error(request, "Você não pode desativar o plano gratuito padrão.")
+        return redirect("admin_planos")
+
+    # Se for desativar (estava ativo -> vai para inativo)
+    if plano.ativo:
+        # procura o plano padrão (ativo), pode ser sempre o Free Pigeon Basic
+        plano_default = (
+            Plano.objects.filter(is_default=True, ativo=True)
+            .exclude(id=plano.id)
+            .first()
+        )
+
+        if not plano_default:
+            messages.error(
+                request,
+                "Nenhum outro plano padrão ativo encontrado para mover os usuários."
+            )
+            return redirect("admin_planos")
+
+        # move usuários para o plano padrão
+        qtd = Usuario.objects.filter(plano=plano).update(plano=plano_default)
+
+        plano.ativo = False
+        plano.save()
+
+        messages.info(
+            request,
+            f"Plano '{plano.nome}' desativado. {qtd} usuário(s) movidos para '{plano_default.nome}'."
+        )
+    else:
+        # Ativando o plano novamente
+        plano.ativo = True
+        plano.save()
+        messages.success(request, f"Plano '{plano.nome}' foi ativado.")
+
+    return redirect("admin_planos")
+
+
+@admin_required
+def admin_categorias(request):
+    categorias = Categoria.objects.annotate(
+        produtos_count=Count('produto')  # Produto tem FK categoria → nome do modelo minúsculo
+    )
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "categorias": categorias,
+    }
+    return render(request, "admin/categorias_list.html", context)
+
+
+@admin_required
+def admin_criar_categoria(request):
+    if request.method == 'POST':
+        nome = (request.POST.get('nome') or '').strip()
+        imagem = request.FILES.get('imagem')
+
+        if not nome:
+            messages.error(request, 'O nome da categoria é obrigatório.')
+            return redirect('admin_categorias')
+
+        Categoria.objects.create(
+            nome=nome,
+            imagem=imagem
+        )
+
+        messages.success(request, 'Categoria criada com sucesso.')
+        return redirect('admin_categorias')
+
+    # GET → exibe formulário vazio
+    context = {
+        "admin_username": _get_admin_username(request),
+        "categoria": None,
+    }
+    return render(request, "admin/categorias_form.html", context)
+
+
+@admin_required
+def admin_editar_categoria(request, categoria_id):
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+
+    if request.method == 'POST':
+        nome = (request.POST.get('nome') or '').strip()
+        imagem = request.FILES.get('imagem')
+
+        if not nome:
+            messages.error(request, 'O nome da categoria é obrigatório.')
+            return redirect('admin_categorias')
+
+        categoria.nome = nome
+        if imagem:
+            categoria.imagem = imagem
+        categoria.save()
+
+        messages.success(request, 'Categoria atualizada com sucesso.')
+        return redirect('admin_categorias')
+
+    # GET → exibe formulário preenchido
+    context = {
+        "admin_username": _get_admin_username(request),
+        "categoria": categoria,
+    }
+    return render(request, "admin/categorias_form.html", context)
+
+
+@admin_required
+def admin_excluir_categoria(request, categoria_id):
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+
+    if request.method == 'POST':
+        categoria.delete()
+        messages.success(request, 'Categoria excluída com sucesso.')
+        return redirect('admin_categorias')
+
+    # GET → tela de confirmação
+    context = {
+        "admin_username": _get_admin_username(request),
+        "categoria": categoria,
+    }
+    return render(request, "admin/categorias_confirm_delete.html", context)
+
+@admin_required
+def admin_usuarios(request):
+    """
+    Lista usuários com filtro de status (ativo/inativo/todos) e busca por nome/email.
+    """
+    q = (request.GET.get("q") or "").strip()
+    status = request.GET.get("status") or "todos"  # 'ativo', 'inativo', 'todos'
+
+    usuarios_qs = Usuario.objects.select_related("loja", "plano")
+
+    if q:
+        usuarios_qs = usuarios_qs.filter(
+            Q(nome__icontains=q) |
+            Q(email__icontains=q)
+        )
+
+    if status == "ativo":
+        usuarios_qs = usuarios_qs.filter(ativo=True)
+    elif status == "inativo":
+        usuarios_qs = usuarios_qs.filter(ativo=False)
+
+    usuarios_qs = usuarios_qs.order_by("nome")
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "usuarios": usuarios_qs,
+        "filtro_q": q,
+        "filtro_status": status,
+    }
+    return render(request, "admin/usuarios_list.html", context)
+
+
+@admin_required
+def admin_toggle_usuario_ativo(request, usuario_id):
+    """
+    Alterna o status ativo/inativo de um usuário.
+    """
+    if request.method != "POST":
+        return redirect("admin_usuarios")
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario.ativo = not usuario.ativo
+    usuario.save()
+
+    if usuario.ativo:
+        messages.success(request, f"O usuário '{usuario.nome}' foi ativado.")
+    else:
+        messages.info(request, f"O usuário '{usuario.nome}' foi desativado.")
+
+    # mantém filtros atuais na volta, se quiser dar upgrade depois com querystring
+    return redirect("admin_usuarios")
+
+
+@admin_required
+def admin_usuario_detalhe(request, usuario_id):
+    """
+    Mostra todos os dados possíveis de um usuário:
+    - dados básicos
+    - plano
+    - loja
+    - endereços
+    - produtos criados por ele (como vendedor e via loja dele)
+    - pedidos feitos por ele
+    """
+    usuario = get_object_or_404(
+        Usuario.objects.select_related("plano", "loja"),
+        id=usuario_id
+    )
+
+    # Endereços
+    enderecos = usuario.enderecos.all().order_by("-principal", "id")
+
+    # Produtos criados pelo usuário
+    produtos = Produto.objects.filter(
+        Q(vendedor=usuario) |
+        Q(loja=usuario.loja)
+    ).select_related("categoria", "loja")
+
+    # Pedidos do usuário
+    pedidos = (
+        Pedido.objects
+        .filter(usuario=usuario)
+        .prefetch_related("itens__produto")
+        .order_by("-data_efetuado")
+    )
+
+    # enriquecer pedidos com total e resumo
+    for p in pedidos:
+        p.total_valor = p.total()
+        itens = list(p.itens.all())
+        if itens:
+            nomes = [f"{item.produto.nome} (x{item.quantidade})" for item in itens]
+            if len(nomes) > 2:
+                p.produtos_resumo = ", ".join(nomes[:2]) + f" + {len(nomes) - 2} itens"
+            else:
+                p.produtos_resumo = ", ".join(nomes)
+        else:
+            p.produtos_resumo = "-"
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "usuario_alvo": usuario,
+        "enderecos": enderecos,
+        "produtos": produtos,
+        "pedidos": pedidos,
+    }
+    return render(request, "admin/usuario_detalhe.html", context)
+
+@admin_required
+def admin_toggle_usuario_ativo(request, usuario_id):
+    if request.method != "POST":
+        return redirect("admin_usuarios")
+
+    usuario = get_object_or_404(Usuario, id=usuario_id)
+    usuario.ativo = not usuario.ativo
+    usuario.save()
+
+    if usuario.ativo:
+        messages.success(request, f"O usuário '{usuario.nome}' foi ativado.")
+    else:
+        messages.info(request, f"O usuário '{usuario.nome}' foi desativado.")
+
+    return redirect("admin_usuarios")
+
+
+@admin_required
+def admin_produtos(request):
+    """
+    Lista todos os produtos com filtro de status e busca.
+    """
+    q = (request.GET.get("q") or "").strip()
+    status = request.GET.get("status") or "todos"  # 'ativo', 'inativo', 'todos'
+
+    produtos_qs = Produto.objects.select_related("categoria", "loja", "vendedor")
+
+    if q:
+        produtos_qs = produtos_qs.filter(
+            Q(nome__icontains=q) |
+            Q(vendedor__nome__icontains=q) |
+            Q(loja__nome__icontains=q)
+        )
+
+    if status == "ativo":
+        produtos_qs = produtos_qs.filter(ativo=True)
+    elif status == "inativo":
+        produtos_qs = produtos_qs.filter(ativo=False)
+
+    produtos_qs = produtos_qs.order_by("-id")
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "produtos": produtos_qs,
+        "filtro_q": q,
+        "filtro_status": status,
+    }
+    return render(request, "admin/produtos_list.html", context)
+
+
+@admin_required
+def admin_toggle_produto_ativo(request, produto_id):
+    """
+    Alterna o campo 'ativo' do produto (Ativo <-> Inativo).
+    Apenas via POST.
+    """
+    if request.method != "POST":
+        return redirect('admin_produtos')
+
+    produto = get_object_or_404(Produto, id=produto_id)
+    produto.ativo = not produto.ativo
+    produto.save()
+
+    if produto.ativo:
+        messages.success(request, f"O produto '{produto.nome}' foi ativado.")
+    else:
+        messages.info(request, f"O produto '{produto.nome}' foi desativado.")
+
+    return redirect('admin_produtos')
+
+
+@admin_required
+def admin_produto_detalhe(request, produto_id):
+    """
+    Detalhes de um produto:
+    - dados básicos
+    - categoria
+    - vendedor/loja
+    - atributos
+    - pedidos em que aparece + resumo de vendas
+    """
+    produto = get_object_or_404(
+        Produto.objects.select_related("categoria", "loja", "vendedor"),
+        id=produto_id
+    )
+
+    # Atributos dinâmicos
+    atributos = produto.atributos.select_related("atributo").all()
+
+    # Pedidos em que este produto aparece
+    itens_pedido = (
+        PedidoProduto.objects
+        .select_related("pedido", "pedido__usuario")
+        .filter(produto=produto)
+        .order_by("-pedido__data_efetuado")
+    )
+
+    # Resumo de vendas desse produto
+    resumo = itens_pedido.aggregate(
+        total_quantidade=Sum("quantidade"),
+        total_faturado=Sum(F("quantidade") * F("preco_unitario")),
+    )
+
+    total_quantidade = resumo["total_quantidade"] or 0
+    total_faturado = resumo["total_faturado"] or 0
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "produto": produto,
+        "atributos": atributos,
+        "itens_pedido": itens_pedido,
+        "total_quantidade_vendida": total_quantidade,
+        "total_faturado_produto": total_faturado,
+    }
+    return render(request, "admin/produto_detalhe.html", context)
+
+@admin_required
+def admin_transacoes(request):
+    # Carrega pedidos com usuário e itens/produtos
+    pedidos = (
+        Pedido.objects
+        .select_related('usuario')
+        .prefetch_related('itens__produto')
+        .order_by('-data_efetuado')
+    )
+
+    # Total de transações (quantidade)
+    total_transacoes = pedidos.count()
+
+    # Total em dinheiro (somando Pedido.total())
+    total_valor = Decimal('0.00')
+    for p in pedidos:
+        total_valor += p.total()
+
+    # Enriquecer cada pedido com total_valor e um resumo de produtos
+    for p in pedidos:
+        p.total_valor = p.total()
+
+        itens = list(p.itens.all())
+        if itens:
+            nomes = [f"{item.produto.nome} (x{item.quantidade})" for item in itens]
+            if len(nomes) > 2:
+                p.produtos_resumo = ", ".join(nomes[:2]) + f" + {len(nomes) - 2} itens"
+            else:
+                p.produtos_resumo = ", ".join(nomes)
+        else:
+            p.produtos_resumo = "-"
+
+    context = {
+        "admin_username": _get_admin_username(request),
+        "pedidos": pedidos,
+        "total_transacoes": total_transacoes,
+        "total_valor": total_valor,
+    }
+    return render(request, "admin/transacoes_list.html", context)

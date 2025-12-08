@@ -25,9 +25,9 @@
                     <p style="font-size:13px; color:var(--primary-blue);">
                         Preço atual:
                         {% if produto.desconto %}
-                            R$ {{ produto.preco_final }} (com desconto)
+                            R$ {{ produto.preco_final|floatformat:2 }} (com desconto)
                         {% else %}
-                            R$ {{ produto.valor }}
+                            R$ {{ produto.valor|floatformat:2 }}
                         {% endif %}
                     </p>
                 </div>

@@ -1,0 +1,74 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Transações - Free Pigeon{% endblock %}
+{% block header_title %}Transações{% endblock %}
+
+{% block content %}
+<div class="section-container active">
+
+    <!-- Cards de resumo -->
+    <div class="stats-grid" style="margin-bottom: 1.5rem;">
+        <div class="stat-card">
+            <div class="stat-label">Total Movimentado</div>
+            <div class="stat-value">
+                R$ {{ total_valor|floatformat:2 }}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Quantidade de Transações</div>
+            <div class="stat-value">
+                {{ total_transacoes }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de transações -->
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Histórico de Transações</h3>
+            <input type="text"
+                   class="search-input"
+                   placeholder="Buscar por ID, comprador, produto..."
+                   data-table="transactions-table">
+        </div>
+
+        <table id="transactions-table">
+            <thead>
+                <tr>
+                    <th>ID Transação</th>
+                    <th>Data</th>
+                    <th>Comprador</th>
+                    <th>Produtos</th>
+                    <th>Valor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pedido in pedidos %}
+                <tr>
+                    <td>#TRX-{{ pedido.id }}</td>
+                    <td>{{ pedido.data_efetuado|date:"d/m/Y H:i" }}</td>
+                    <td>{{ pedido.usuario.nome }}</td>
+                    <td>{{ pedido.produtos_resumo }}</td>
+                    <td>R$ {{ pedido.total_valor|floatformat:2 }}</td>
+                    <td>
+                        {% if pedido.status|lower == 'pago' or pedido.status|lower == 'concluído' %}
+                            <span class="badge badge-success">{{ pedido.status }}</span>
+                        {% elif pedido.status|lower == 'pendente' or pedido.status|lower == 'processando' %}
+                            <span class="badge badge-warning">{{ pedido.status }}</span>
+                        {% else %}
+                            <span class="badge badge-neutral">{{ pedido.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">Nenhuma transação encontrada.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

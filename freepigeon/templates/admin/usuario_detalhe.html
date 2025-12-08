@@ -1,0 +1,224 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Usuário - {{ usuario_alvo.nome }} - Free Pigeon{% endblock %}
+{% block header_title %}Detalhes do Usuário{% endblock %}
+
+{% block content %}
+
+<div class="section-container active" style="display:flex; flex-direction:column; gap:20px;">
+
+    <!-- Resumo principal -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">Nome</div>
+            <div class="stat-value">{{ usuario_alvo.nome }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Plano</div>
+            <div class="stat-value">
+                {% if usuario_alvo.plano %}
+                    {{ usuario_alvo.plano.nome }}
+                {% else %}
+                    Sem plano
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Loja</div>
+            <div class="stat-value">
+                {% if usuario_alvo.loja %}
+                    {{ usuario_alvo.loja.nome }}
+                {% else %}
+                    -
+                {% endif %}
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Status</div>
+            <div class="stat-value">
+                {% if usuario_alvo.ativo %}
+                    <span class="badge badge-success">Ativo</span>
+                {% else %}
+                    <span class="badge badge-danger">Inativo</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados básicos -->
+    <div class="table-container">
+        <h3>Dados Básicos</h3>
+        <table>
+            <tbody>
+                <tr>
+                    <th style="width:200px;">Nome</th>
+                    <td>{{ usuario_alvo.nome }}</td>
+                </tr>
+                <tr>
+                    <th>E-mail</th>
+                    <td>{{ usuario_alvo.email }}</td>
+                </tr>
+                <tr>
+                    <th>Telefone</th>
+                    <td>{{ usuario_alvo.telefone|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>CPF</th>
+                    <td>{{ usuario_alvo.cpf|default:"-" }}</td>
+                </tr>
+                <tr>
+                    <th>Plano</th>
+                    <td>
+                        {% if usuario_alvo.plano %}
+                            {{ usuario_alvo.plano.nome }}
+                        {% else %}
+                            Sem plano
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Loja</th>
+                    <td>
+                        {% if usuario_alvo.loja %}
+                            {{ usuario_alvo.loja.nome }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Endereços -->
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Endereços</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Apelido</th>
+                    <th>Endereço</th>
+                    <th>CEP</th>
+                    <th>Cidade/Estado</th>
+                    <th>Principal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in enderecos %}
+                <tr>
+                    <td>{{ e.apelido|default:"-" }}</td>
+                    <td>{{ e.rua }}, {{ e.numero }} - {{ e.bairro }}</td>
+                    <td>{{ e.cep }}</td>
+                    <td>{{ e.cidade }} / {{ e.estado }}</td>
+                    <td>
+                        {% if e.principal %}
+                            <span class="badge badge-success">Sim</span>
+                        {% else %}
+                            <span class="badge badge-neutral">Não</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Nenhum endereço cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Produtos criados -->
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Produtos Criados</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Loja</th>
+                    <th>Preço</th>
+                    <th>Estoque</th>
+                    <th>Ativo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in produtos %}
+                <tr>
+                    <td>#{{ p.id }}</td>
+                    <td>{{ p.nome }}</td>
+                    <td>{{ p.categoria.nome }}</td>
+                    <td>
+                        {% if p.loja %}
+                            {{ p.loja.nome }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>R$ {{ p.preco_final|floatformat:2 }}</td>
+                    <td>{{ p.q_estoque }}</td>
+                    <td>
+                        {% if p.ativo %}
+                            <span class="badge badge-success">Ativo</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inativo</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7">Nenhum produto criado por este usuário.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pedidos -->
+    <div class="table-container">
+        <div class="table-header-actions">
+            <h3>Pedidos do Usuário</h3>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Pedido</th>
+                    <th>Data</th>
+                    <th>Produtos</th>
+                    <th>Valor Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pedidos %}
+                <tr>
+                    <td>#{{ p.id }}</td>
+                    <td>{{ p.data_efetuado|date:"d/m/Y H:i" }}</td>
+                    <td>{{ p.produtos_resumo }}</td>
+                    <td>R$ {{ p.total_valor|floatformat:2 }}</td>
+                    <td>
+                        {% if p.status|lower == 'pago' or p.status|lower == 'concluído' %}
+                            <span class="badge badge-success">{{ p.status }}</span>
+                        {% elif p.status|lower == 'pendente' or p.status|lower == 'processando' %}
+                            <span class="badge badge-warning">{{ p.status }}</span>
+                        {% else %}
+                            <span class="badge badge-neutral">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Nenhum pedido para este usuário.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

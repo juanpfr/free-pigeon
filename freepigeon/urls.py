@@ -65,4 +65,42 @@ urlpatterns = [
 
     # Frete
     path('calcular-frete/', views.calcular_frete, name='calcular_frete'),
+
+    # -------------------------
+    # ADMIN
+    # -------------------------
+    path('adm/login', views.admin_login, name='admin_login'),
+    path('adm/dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('adm/logout/', views.admin_logout, name='admin_logout'),
+
+    # Planos
+    path('adm/planos/', views.admin_planos, name='admin_planos'),
+    path('adm/planos/criar/', views.admin_criar_plano, name='admin_criar_plano'),
+    path('adm/planos/<int:plano_id>/editar/', views.admin_editar_plano, name='admin_editar_plano'),
+    path('adm/planos/<int:plano_id>/excluir/', views.admin_excluir_plano, name='admin_excluir_plano'),
+    path('adm/planos/<int:plano_id>/toggle/', views.admin_toggle_plano_ativo, name='admin_toggle_plano_ativo'),
+
+
+    # Categorias
+    path('adm/categorias/', views.admin_categorias, name='admin_categorias'),
+    path('adm/categorias/criar/', views.admin_criar_categoria, name='admin_criar_categoria'),
+    path('adm/categorias/<int:categoria_id>/editar/', views.admin_editar_categoria, name='admin_editar_categoria'),
+    path('adm/categorias/<int:categoria_id>/excluir/', views.admin_excluir_categoria, name='admin_excluir_categoria'),
+
+
+    # Usuários
+    path("adm/usuarios/", views.admin_usuarios, name="admin_usuarios"),
+    path("adm/usuarios/<int:usuario_id>/toggle/", views.admin_toggle_usuario_ativo, name="admin_toggle_usuario_ativo"),
+    path("adm/usuarios/<int:usuario_id>/", views.admin_usuario_detalhe, name="admin_usuario_detalhe"),
+
+
+
+    # Produtos
+    path('adm/produtos/', views.admin_produtos, name='admin_produtos'),
+    path('adm/produtos/<int:produto_id>/toggle/', views.admin_toggle_produto_ativo, name='admin_toggle_produto_ativo'),
+    path('adm/produtos/<int:produto_id>/', views.admin_produto_detalhe, name='admin_produto_detalhe'),
+
+
+    # Transações
+    path('adm/transacoes/', views.admin_transacoes, name='admin_transacoes'),
 ]

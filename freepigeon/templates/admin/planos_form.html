@@ -1,0 +1,163 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}
+    {% if plano %}Editar Plano - {{ plano.nome }}{% else %}Novo Plano{% endif %} - Free Pigeon
+{% endblock %}
+
+{% block header_title %}
+    {% if plano %}Editar Plano{% else %}Novo Plano{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="section-container active">
+    <div class="table-container form-card-narrow" style="max-width: 640px;">
+        <div class="table-header-actions form-card-header">
+            <div>
+                <h3>
+                    {% if plano %}Editar Plano{% else %}Criar Novo Plano{% endif %}
+                </h3>
+                <p class="muted-text">
+                    Configure o nome, preço, limite de anúncios e se este será o plano gratuito padrão da plataforma.
+                </p>
+            </div>
+        </div>
+
+        <form method="post"
+              action="{% if plano %}{% url 'admin_editar_plano' plano.id %}{% else %}{% url 'admin_criar_plano' %}{% endif %}">
+            {% csrf_token %}
+
+            <div class="form-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="nome">Nome do Plano</label>
+                        <input type="text"
+                               id="nome"
+                               name="nome"
+                               required
+                               value="{% if plano %}{{ plano.nome }}{% endif %}"
+                               placeholder="Ex: Free Pigeon Plus">
+                        <small class="helper-text">
+                            Nome exibido para o usuário na hora de escolher o plano.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="slug">Slug</label>
+                        <input type="text"
+                               id="slug"
+                               name="slug"
+                               required
+                               value="{% if plano %}{{ plano.slug }}{% endif %}"
+                               placeholder="ex: free-plus">
+                        <small class="helper-text">
+                            Use apenas letras minúsculas, números e hífen. Ex: <code>free-basic</code>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="descricao">Descrição</label>
+                    <textarea id="descricao"
+                              name="descricao"
+                              rows="3"
+                              placeholder="Benefícios do plano...">{% if plano and plano.descricao %}{{ plano.descricao }}{% endif %}</textarea>
+                    <small class="helper-text">
+                        Essa descrição pode aparecer nos cards de planos para explicar vantagens e limites.
+                    </small>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="preco_mensal">Preço Mensal (R$)</label>
+
+                        {% if plano and plano.is_default %}
+                            <!-- Plano padrão: sempre gratuito, campo desabilitado -->
+                            <input type="number"
+                                   id="preco_mensal"
+                                   name="preco_mensal"
+                                   step="0.01"
+                                   value="0.00"
+                                   disabled>
+                            <small class="helper-text">
+                                O plano padrão é sempre gratuito.
+                            </small>
+                        {% else %}
+                            <input type="number"
+                                   id="preco_mensal"
+                                   name="preco_mensal"
+                                   step="0.01"
+                                   value="{% if plano %}{{ plano.preco_mensal }}{% else %}0.00{% endif %}">
+                            <small class="helper-text">
+                                Defina o valor mensal. Use 0,00 para um plano gratuito.
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="limite_anuncios">Limite de Anúncios</label>
+
+                        {% if plano and plano.is_default %}
+                            <!-- Plano padrão: sempre 5 anúncios -->
+                            <input type="number"
+                                   id="limite_anuncios"
+                                   name="limite_anuncios"
+                                   value="5"
+                                   disabled>
+                            <small class="helper-text">
+                                O plano padrão permite 5 anúncios ativos.
+                            </small>
+                        {% else %}
+                            <input type="number"
+                                   id="limite_anuncios"
+                                   name="limite_anuncios"
+                                   value="{% if plano and plano.limite_anuncios %}{{ plano.limite_anuncios }}{% else %}0{% endif %}">
+                            <small class="helper-text">
+                                Deixe 0 ou vazio para ilimitado.
+                            </small>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group" style="display:flex; gap:8px; align-items:center;">
+                        <input type="checkbox"
+                               id="ativo"
+                               name="ativo"
+                               {% if not plano or plano.ativo %}checked{% endif %}>
+                        <label for="ativo" style="margin:0;">Ativo</label>
+                        <small class="helper-text">
+                            Se desmarcado, o plano não aparecerá para novos assinantes.
+                        </small>
+                    </div>
+
+                    <div class="form-group" style="display:flex; gap:8px; align-items:flex-start; flex-direction:column;">
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <input type="checkbox"
+                                   id="is_default"
+                                   name="is_default"
+                                   {% if plano and plano.is_default %}checked{% endif %}>
+                            <label for="is_default" style="margin:0;">Plano padrão gratuito</label>
+                        </div>
+                        <small class="helper-text" style="max-width: 320px;">
+                            Se marcado, este será o plano gratuito padrão (R$ 0,00 e limite de 5 anúncios).
+                            Qualquer outro plano padrão será desmarcado automaticamente.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="confirm-actions">
+                <a href="{% url 'admin_planos' %}"
+                   class="btn-cancel confirm-btn-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-save">
+                    {% if plano %}Salvar alterações{% else %}Criar plano{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

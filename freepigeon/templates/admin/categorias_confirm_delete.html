@@ -1,0 +1,53 @@
+{% extends "admin/baseadm.html" %}
+
+{% block title %}Excluir Categoria - {{ categoria.nome }} - Free Pigeon{% endblock %}
+{% block header_title %}Excluir Categoria{% endblock %}
+
+{% block content %}
+<div class="section-container active">
+    <div class="confirm-card">
+        <div class="confirm-header">
+            <div class="confirm-icon danger">
+                <span>!</span>
+            </div>
+            <div class="confirm-header-text">
+                <h3>Tem certeza que deseja excluir esta categoria?</h3>
+                <p>
+                    Essa ação não pode ser desfeita. Os produtos continuarão existindo,
+                    mas deixarão de estar vinculados a esta categoria.
+                </p>
+            </div>
+        </div>
+
+        <div class="confirm-box">
+            {% if categoria.imagem %}
+                <img src="{{ categoria.imagem.url }}"
+                     alt="Imagem da categoria"
+                     class="confirm-thumb">
+            {% else %}
+                <div class="confirm-thumb placeholder">
+                    <span>Sem img</span>
+                </div>
+            {% endif %}
+
+            <div class="confirm-info">
+                <p class="confirm-label">Categoria selecionada</p>
+                <p class="confirm-name">{{ categoria.nome }}</p>
+            </div>
+        </div>
+
+        <form method="post" action="{% url 'admin_excluir_categoria' categoria.id %}">
+            {% csrf_token %}
+            <div class="confirm-actions">
+                <a href="{% url 'admin_categorias' %}"
+                   class="btn-cancel confirm-btn-secondary">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-save btn-danger">
+                    Confirmar exclusão
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

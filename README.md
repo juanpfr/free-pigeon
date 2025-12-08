@@ -25,29 +25,39 @@ Acesse:
 ## ⚙️ Instalação Rápida
 ```bash
 # Clone o repositório
+# Dentro do terminal
 git clone https://github.com/juanpfr/free-pigeon/
 
 # Acesse a pasta do projeto
+# Dentro do terminal
 cd free-pigeon
 
 # Crie o ambiente virtual
+# Dentro do terminal
 python -m venv venv
-.\venv\Scripts\activate  # (Windows)
+.\venv\Scripts\activate   # (Windows)
 source venv/bin/activate # (Linux/Mac)
 
-# Caso ocorra algum erro no comando acima, tente este comando para permitir ambientes virtuais:
+# Caso ocorra erro no comando acima, tente este comando para permitir ambientes virtuais temporariamente:
+# Dentro do terminal
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
+# Para aplicar a permissão de forma permanente (somente para o usuário atual):
+# Dentro do terminal
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+
 # Instale as dependências
+# Dentro do terminal
 pip install -r requirements.txt
 
 # Atualizar/Criar .env na raiz do projeto(free-pigeon), com base nas informações e no mesmo local do arquivo: .env.example
 
 # Criar o Banco de dados no PostgreSQL (Se não tiver sido criado)
-        # Dentro do pgAdmin4
-        CREATE DATABASE freepigeon_db;
+# Dentro do pgAdmin4
+CREATE DATABASE freepigeon_db;
 
 # Criar migrações no PostgreSQL
+# Dentro do terminal
 python manage.py makemigrations
 
 # Executar migrações no PostgreSQL

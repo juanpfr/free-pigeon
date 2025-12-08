@@ -76,44 +76,76 @@
                         <input type="password" id="senha" name="senha" required>
                     </div>
 
-                    <!-- ESCOLHA DO PLANO -->
+                                        <!-- ESCOLHA DO PLANO -->
                     <div class="plan-section">
-                        <h3>Escolha seu plano</h3>
-                        <div class="plan-options">
+                        <div class="plan-section-header">
+                            <h3>Escolha seu plano</h3>
+                            <p>Você pode mudar de plano depois, na área de perfil.</p>
+                        </div>
 
+                        {% if planos %}
+                        <div class="plan-options">
                             {% for plano in planos %}
-                            <label class="plan-card">
+                            <label class="plan-card {% if plano.is_default %}plan-card-default{% endif %}">
+                                <!-- input para seleção do plano -->
                                 <input
                                     type="radio"
+                                    class="plan-radio"
                                     name="plano"
                                     value="{{ plano.slug }}"
                                     {% if plano.is_default %}checked{% endif %}
                                 >
-                                <span class="plan-name">{{ plano.nome }}</span>
 
-                                <span class="plan-price">
-                                    {% if plano.preco_mensal > 0 %}
-                                        R$ {{ plano.preco_mensal }}/mês
-                                    {% else %}
-                                        Grátis
-                                    {% endif %}
-                                </span>
+                                <div class="plan-card-inner">
+                                    <div class="plan-card-header">
+                                        <div class="plan-title">
+                                            <span class="plan-name">{{ plano.nome }}</span>
 
-                                <span class="plan-desc">
-                                    {{ plano.descricao|default:"Plano para vendedores do Free Pigeon." }}
-                                </span>
+                                            {% if plano.is_default %}
+                                                <span class="plan-badge plan-badge-default">Plano gratuito</span>
+                                            {% else %}
+                                                <span class="plan-badge plan-badge-paid">Recomendado para vendedores</span>
+                                            {% endif %}
+                                        </div>
 
-                                {% if plano.limite_anuncios %}
-                                    <span class="plan-limit">Até {{ plano.limite_anuncios }} anúncios ativos</span>
-                                {% else %}
-                                    <span class="plan-limit">Anúncios ilimitados</span>
-                                {% endif %}
+                                        <div class="plan-price">
+                                            {% if plano.preco_mensal > 0 %}
+                                                <strong>R$ {{ plano.preco_mensal|floatformat:2 }}</strong>
+                                                <span class="price-period">/ mês</span>
+                                            {% else %}
+                                                <strong>Grátis</strong>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <p class="plan-desc">
+                                        {{ plano.descricao|default:"Plano para vendedores do Free Pigeon." }}
+                                    </p>
+
+                                    <div class="plan-meta">
+                                        {% if plano.limite_anuncios %}
+                                            <span class="plan-limit">Até {{ plano.limite_anuncios }} anúncios ativos</span>
+                                        {% else %}
+                                            <span class="plan-limit">Anúncios ilimitados</span>
+                                        {% endif %}
+
+                                        {% if plano.preco_mensal > 0 %}
+                                            <span class="plan-tag">Cobrança via Stripe na confirmação</span>
+                                        {% else %}
+                                            <span class="plan-tag plan-tag-free">Ideal para começar</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </label>
-                            {% empty %}
-                            <p>Nenhum plano configurado. Contate o suporte.</p>
                             {% endfor %}
                         </div>
+                        {% else %}
+                            <p style="font-size:0.9rem; color:#6b7280; margin-top:0.5rem;">
+                                Nenhum plano configurado. Contate o suporte.
+                            </p>
+                        {% endif %}
                     </div>
+
 
                     <!-- Consentimento -->
                     <div class="form-group-checkbox">
