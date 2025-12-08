@@ -234,53 +234,57 @@ def so_digitos(valor):
     return re.sub(r'\D', '', str(valor))
 
 def cadastrar_usuario(request):
+    planos = Plano.objects.filter(ativo=True)
+
     if request.method == 'POST':
-        nome = request.POST.get('nome')
-        email = request.POST.get('email')
-        telefone = request.POST.get('telefone')
-        cpf = request.POST.get('cpf')
-        senha = request.POST.get('senha')
+        nome = request.POST.get('nome', '').strip()
+        email = request.POST.get('email', '').strip()
+        telefone = request.POST.get('telefone', '').strip()
+        cpf = request.POST.get('cpf', '').strip()
+        senha = request.POST.get('senha', '').strip()
         plano_slug = request.POST.get('plano')
 
-        plano_escolhido = Plano.objects.filter(slug=plano_slug).first()
+        # validação básica
+        if not nome or not email or not senha:
+            messages.error(request, 'Preencha nome, e-mail e senha.')
+            return render(request, "cadastro.html", {"planos": planos})
 
-        # Segurança: se não veio plano, usa o default
+        plano_escolhido = Plano.objects.filter(slug=plano_slug, ativo=True).first()
         if not plano_escolhido:
-            plano_escolhido = Plano.objects.filter(is_default=True).first()
+            plano_escolhido = Plano.objects.filter(is_default=True, ativo=True).first()
 
-        # Cria o usuário
-        usuario = Usuario.objects.create(
-            nome=nome,
-            email=email,
-            telefone=telefone,
-            cpf=cpf,
-            senha=senha,
-            plano=plano_escolhido
-        )
+        if not plano_escolhido:
+            messages.error(request, 'Nenhum plano disponível no momento. Tente novamente mais tarde.')
+            return render(request, "cadastro.html", {"planos": planos})
+
+        try:
+            with transaction.atomic():
+                usuario = Usuario.objects.create(
+                    nome=nome,
+                    email=email,
+                    telefone=telefone,
+                    cpf=cpf or None,
+                    senha=senha,
+                    plano=plano_escolhido
+                )
+        except IntegrityError:
+            # aqui provavelmente é e-mail ou CPF já usados
+            messages.error(request, 'Já existe um usuário com esse e-mail ou CPF.')
+            return render(request, "cadastro.html", {"planos": planos})
 
         request.session['usuario_id'] = usuario.id
 
-        # -----------------------------------------------------
-        # >>> É AQUI <<< onde você coloca o print e o if
-        # -----------------------------------------------------
+        # plano pago?
+        is_plano_pago = bool(plano_escolhido.preco_mensal and plano_escolhido.preco_mensal > 0)
 
-        is_plano_pago = plano_escolhido.preco_mensal > 0
-
-        print("PLANO ESCOLHIDO:", plano_escolhido.nome)
-        print("É PAGO?", is_plano_pago)
-        print("Valor:", plano_escolhido.preco_mensal)
-
-        # Se o plano é pago → iniciar Stripe Checkout
-        if plano_escolhido and plano_escolhido.preco_mensal and plano_escolhido.preco_mensal > 0:
+        if is_plano_pago:
             try:
                 valor_centavos = int(plano_escolhido.preco_mensal * 100)
-
                 domain_url = request.build_absolute_uri('/')[:-1]
                 success_url = domain_url + '/planos/sucesso/?session_id={CHECKOUT_SESSION_ID}'
                 cancel_url = domain_url + '/planos/'
 
                 checkout_session = stripe.checkout.Session.create(
-                    # 👇 POR ENQUANTO SOMENTE CARTÃO
                     payment_method_types=['card'],
                     mode='payment',
                     line_items=[{
@@ -303,22 +307,23 @@ def cadastrar_usuario(request):
                         'origem': 'cadastro',
                     },
                 )
-
                 return redirect(checkout_session.url)
-
             except Exception as e:
                 print('Erro ao criar sessão de plano no Stripe (cadastro):', e)
                 messages.error(
                     request,
-                    'Sua conta foi criada, mas ocorreu um erro ao iniciar o pagamento do plano. '
+                    'Conta criada, mas houve erro ao iniciar o pagamento do plano. '
                     'Você pode tentar novamente na página "Mudar plano".'
                 )
                 return redirect('planos')
 
+        # se plano gratuito, redireciona pra home ou auth
+        messages.success(request, 'Conta criada com sucesso!')
+        return redirect('home')
 
     # GET
     planos = Plano.objects.filter(ativo=True)
-    return render(request, "cadastro.html", { "planos": planos })
+    return render(request, "cadastro.html", {"planos": planos})
 
 
 
