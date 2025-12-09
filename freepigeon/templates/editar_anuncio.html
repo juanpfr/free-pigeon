@@ -167,7 +167,7 @@
                 </div>
 
                 <div style="margin-top: 1.5rem; display:flex; gap:.75rem; flex-wrap:wrap;">
-                    <button type="submit" style="
+                    <button data-confirm="Deseja editar o anúncio '{{ produto.nome }}'?" data-turbo="false" type="submit"  style="
                         padding: .8rem 1.6rem;
                         border-radius: 999px;
                         border:none;
@@ -194,4 +194,17 @@
         </div>
     </section>
 </main>
+<script>
+document.addEventListener("click", function(e) {
+    const el = e.target.closest("[data-confirm]");
+    if (!el) return;
+
+    const mensagem = el.getAttribute("data-confirm");
+    if (!confirm(mensagem)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return false;
+    }
+});
+</script>
 {% endblock %}
