@@ -16,7 +16,6 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, F
-from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
 from django.db.models import Count
 from django.urls import reverse
@@ -248,30 +247,31 @@ def cadastrar_usuario(request):
         if not plano_escolhido:
             plano_escolhido = Plano.objects.filter(is_default=True).first()
 
+        # (opcional) se ainda não tiver plano, evita quebrar
+        if not plano_escolhido:
+            messages.error(request, 'Nenhum plano disponível no momento. Tente novamente mais tarde.')
+            planos = Plano.objects.filter(ativo=True)
+            return render(request, "cadastro.html", {"planos": planos})
+
+        # 🔐 gera hash da senha (pra login_view com check_password funcionar)
+        senha_hash = make_password(senha)
+
         # Cria o usuário
         usuario = Usuario.objects.create(
             nome=nome,
             email=email,
             telefone=telefone,
             cpf=cpf,
-            senha=senha,
+            senha=senha_hash,
             plano=plano_escolhido
         )
 
+        # 👇 Aqui você "loga" o usuário no seu sistema manual
         request.session['usuario_id'] = usuario.id
-
-        # -----------------------------------------------------
-        # >>> É AQUI <<< onde você coloca o print e o if
-        # -----------------------------------------------------
-
-        is_plano_pago = plano_escolhido.preco_mensal > 0
-
-        print("PLANO ESCOLHIDO:", plano_escolhido.nome)
-        print("É PAGO?", is_plano_pago)
-        print("Valor:", plano_escolhido.preco_mensal)
+        request.session['usuario_nome'] = usuario.nome
 
         # Se o plano é pago → iniciar Stripe Checkout
-        if plano_escolhido and plano_escolhido.preco_mensal and plano_escolhido.preco_mensal > 0:
+        if plano_escolhido.preco_mensal and plano_escolhido.preco_mensal > 0:
             try:
                 valor_centavos = int(plano_escolhido.preco_mensal * 100)
 
@@ -280,7 +280,6 @@ def cadastrar_usuario(request):
                 cancel_url = domain_url + '/planos/'
 
                 checkout_session = stripe.checkout.Session.create(
-                    # 👇 POR ENQUANTO SOMENTE CARTÃO
                     payment_method_types=['card'],
                     mode='payment',
                     line_items=[{
@@ -315,6 +314,10 @@ def cadastrar_usuario(request):
                 )
                 return redirect('planos')
 
+        # 👉 CASO DO PLANO GRÁTIS:
+        # Já está com usuario_id e usuario_nome na sessão, ou seja, logado.
+        messages.success(request, 'Conta criada com sucesso! Você já está logado.')
+        return redirect('home')
 
     # GET
     planos = Plano.objects.filter(ativo=True)

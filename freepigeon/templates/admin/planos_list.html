@@ -67,7 +67,7 @@
                             <a href="{% url 'admin_editar_plano' p.id %}"
                                class="action-btn-pill btn-view"
                                title="Editar plano">
-                                <i data-lucide="edit-2"></i>
+                                <p>📝</p>
                                 <span>Editar</span>
                             </a>
 
@@ -79,14 +79,14 @@
                                     <button type="submit"
                                             class="action-btn-pill btn-toggle-off"
                                             title="Desativar plano">
-                                        <i data-lucide="pause-circle"></i>
+                                        <p>⛔</p>
                                         <span>Desativar</span>
                                     </button>
                                 {% else %}
                                     <button type="submit"
                                             class="action-btn-pill btn-toggle-on"
                                             title="Ativar plano">
-                                        <i data-lucide="play-circle"></i>
+                                        <p>▶️</p>
                                         <span>Ativar</span>
                                     </button>
                                 {% endif %}
@@ -97,7 +97,7 @@
                                 <a href="{% url 'admin_excluir_plano' p.id %}"
                                    class="action-btn-pill btn-delete"
                                    title="Excluir plano">
-                                    <i data-lucide="trash-2"></i>
+                                    <p>🗑️</p>
                                     <span>Excluir</span>
                                 </a>
                             {% else %}
