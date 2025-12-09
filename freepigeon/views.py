@@ -919,8 +919,12 @@ def cadastrar_produto(request):
 
 def home_view(request):
     usuario_nome = request.session.get('usuario_nome')
+
     categorias = Categoria.objects.all()
-    produtos = Produto.objects.all()[:10]  # mostra alguns na home
+
+    # Só produtos ativos na home
+    produtos = Produto.objects.filter(ativo=True)[:10]  # mostra alguns na home
+
     return render(request, 'home.html', {
         'usuario_nome': usuario_nome,
         'categorias': categorias,
@@ -930,8 +934,15 @@ def home_view(request):
 
 def categoria_view(request, categoria_id):
     categoria = get_object_or_404(Categoria, id=categoria_id)
-    produtos = Produto.objects.filter(categoria=categoria)
+
+    # Só produtos ativos nessa categoria
+    produtos = Produto.objects.filter(
+        categoria=categoria,
+        ativo=True
+    )
+
     usuario_nome = request.session.get('usuario_nome')
+
     return render(request, 'categoria.html', {
         'categoria': categoria,
         'produtos': produtos,
@@ -939,10 +950,21 @@ def categoria_view(request, categoria_id):
     })
 
 
+
 def buscar_produtos(request):
     query = request.GET.get('q', '')
-    produtos = Produto.objects.filter(nome__icontains=query) if query else []
+
+    if query:
+        # Busca só em produtos ativos
+        produtos = Produto.objects.filter(
+            nome__icontains=query,
+            ativo=True
+        )
+    else:
+        produtos = []
+
     usuario_nome = request.session.get('usuario_nome')
+
     return render(request, 'buscar.html', {
         'query': query,
         'produtos': produtos,
@@ -951,8 +973,10 @@ def buscar_produtos(request):
 
 
 def produto_view(request, produto_id):
-    produto = get_object_or_404(Produto, id=produto_id)
+    # Só permite ver produto ativo
+    produto = get_object_or_404(Produto, id=produto_id, ativo=True)
     usuario_nome = request.session.get('usuario_nome')
+
     return render(request, 'product.html', {
         'produto': produto,
         'usuario_nome': usuario_nome
